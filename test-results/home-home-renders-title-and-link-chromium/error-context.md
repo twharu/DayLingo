@@ -1,0 +1,77 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "事前調查問卷" [level=2] [ref=e6]
+        - generic [ref=e13]: 第 1 步，共 4 步
+      - generic [ref=e14]:
+        - heading "基本資料" [level=3] [ref=e15]
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - text: 年齡層
+              - generic [ref=e19]: "*"
+            - generic [ref=e20]:
+              - button "18-22歲" [ref=e21]
+              - button "23-27歲" [ref=e22]
+              - button "28-32歲" [ref=e23]
+              - button "33歲以上" [ref=e24]
+          - generic [ref=e25]:
+            - generic [ref=e26]:
+              - text: 性別
+              - generic [ref=e27]: "*"
+            - generic [ref=e28]:
+              - button "男" [ref=e29]
+              - button "女" [ref=e30]
+              - button "不願透露" [ref=e31]
+      - generic [ref=e32]:
+        - button "上一步" [disabled] [ref=e33]
+        - button "下一步" [disabled] [ref=e34]
+    - generic [ref=e35]:
+      - banner [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - heading "日本留學生活日語學習" [level=1] [ref=e39]
+            - paragraph [ref=e40]: 記錄你的日常任務，AI會生成相關的日語學習內容
+          - link "單字庫" [ref=e42] [cursor=pointer]:
+            - /url: /vocabulary
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - text: 1. 選擇日期
+            - generic [ref=e47]: "*"
+          - textbox "1. 選擇日期 *" [ref=e48]: 2025-08-31
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - text: 2. 任務分類
+            - generic [ref=e51]: "*"
+          - combobox "2. 任務分類 *" [ref=e52]:
+            - option "請選擇分類..." [selected]
+            - option "日常生活"
+            - option "購物消費"
+            - option "餐廳用餐"
+            - option "交通出行"
+            - option "學校生活"
+            - option "醫療健康"
+            - option "銀行郵局"
+            - option "工作相關"
+            - option "社交活動"
+            - option "緊急情況"
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - text: 3. 任務名稱
+            - generic [ref=e55]: "*"
+          - textbox "3. 任務名稱 *" [ref=e56]
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - text: 4. 任務詳細描述
+            - generic [ref=e59]: "*"
+          - textbox "4. 任務詳細描述 *" [ref=e60]
+        - button "生成日語學習內容" [disabled] [ref=e62]
+  - button "Open Next.js Dev Tools" [ref=e68] [cursor=pointer]:
+    - img [ref=e69] [cursor=pointer]
+  - alert [ref=e72]
+```

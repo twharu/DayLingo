@@ -24,3 +24,29 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ruby 注音樣式 */
+ruby {
+  ruby-align: center;
+  ruby-position: over;
+}
+
+rt {
+  font-size: 0.6em;
+  color: #2563eb;
+  font-weight: normal;
+  line-height: 1;
+}
+
+/* 確保 ruby 標記在所有容器中都能正確顯示 */
+.ruby-content ruby {
+  ruby-align: center;
+  ruby-position: over;
+}
+
+.ruby-content rt {
+  font-size: 0.6em;
+  color: #2563eb;
+  font-weight: normal;
+  line-height: 1;
+}
