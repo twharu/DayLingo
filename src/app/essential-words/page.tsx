@@ -348,21 +348,19 @@ export default function EssentialWords() {
             {/* 單字列表 */}
             <div className="bg-white rounded-lg shadow-lg p-8">
               <h3 className="text-2xl font-bold text-gray-800 mb-6">常用單字</h3>
-              <div className="grid gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {essentialWords[selectedCategory].words.map((word, index) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xl font-bold text-gray-800">
-                          {word.word}
-                        </h4>
-                        <p className="text-blue-600 font-medium">
-                          {word.reading}
-                        </p>
-                        <p className="text-gray-600">
-                          {word.meaning}
-                        </p>
-                      </div>
+                    <div className="text-center">
+                      <h4 className="text-xl font-bold text-gray-800 mb-2">
+                        {word.word}
+                      </h4>
+                      <p className="text-blue-600 font-medium mb-1">
+                        {word.reading}
+                      </p>
+                      <p className="text-gray-600 text-sm">
+                        {word.meaning}
+                      </p>
                     </div>
                   </div>
                 ))}
