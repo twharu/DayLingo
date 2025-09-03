@@ -5,9 +5,11 @@ import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import Image from 'next/image';
-import SurveyModal from '@/lib/components/SurveyModal';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
+  
   // 取得今天的日期並格式化為 YYYY-MM-DD
   const getTodayDate = () => {
     const today = new Date();
@@ -26,21 +28,9 @@ export default function Home() {
   const [parsedWords, setParsedWords] = useState<any[]>([]);
   const [savingWords, setSavingWords] = useState<Set<number>>(new Set());
   const [savedWords, setSavedWords] = useState<Set<number>>(new Set());
-  const [showSurvey, setShowSurvey] = useState(false);
-  const [showThankYou, setShowThankYou] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // 檢查是否需要顯示問卷
   useEffect(() => {
-    const surveyCompleted = localStorage.getItem('surveyCompleted');
-    if (!surveyCompleted) {
-      // 延遲1.5秒再顯示問卷彈窗
-      const timer = setTimeout(() => {
-        setShowSurvey(true);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-
     // 從 localStorage 載入保存的內容
     const savedContent = localStorage.getItem('generatedContent');
     const savedFormData = localStorage.getItem('formData');
@@ -285,43 +275,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <SurveyModal 
-        isOpen={showSurvey}
-        onComplete={() => {
-          setShowSurvey(false);
-          setShowThankYou(true);
-          // 3秒後自動關閉感謝信息
-          setTimeout(() => {
-            setShowThankYou(false);
-          }, 3000);
-        }}
-      />
-      
-      {/* 感謝信息彈窗 */}
-      {showThankYou && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-8 max-w-md mx-4 text-center">
-            <div className="mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">感謝您的參與！</h3>
-              <p className="text-gray-600 leading-relaxed">
-                您的寶貴意見將幫助我們打造更符合留學生需求的日語學習工具。<br/>
-                祝您在日本的學習生活順利愉快！
-              </p>
-            </div>
-            <button
-              onClick={() => setShowThankYou(false)}
-              className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              開始學習日語
-            </button>
-          </div>
-        </div>
-      )}
       
       <div className="max-w-4xl mx-auto">
         <header className="py-8">
@@ -335,6 +288,12 @@ export default function Home() {
               </p>
             </div>
             <div className="flex gap-3">
+              <Link 
+                href="/essential-words"
+                className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                新手必備
+              </Link>
               <Link 
                 href="/vocabulary"
                 className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"

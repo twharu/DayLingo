@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 interface SurveyModalProps {
   isOpen: boolean;
   onComplete: () => void;
+  onClose?: () => void;
   isManualTrigger?: boolean; // 新增屬性來標記是否為手動觸發
 }
 
@@ -26,7 +28,8 @@ interface SurveyData {
   learningProblems: string[];
 }
 
-export default function SurveyModal({ isOpen, onComplete, isManualTrigger = false }: SurveyModalProps) {
+export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigger = false }: SurveyModalProps) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [surveyData, setSurveyData] = useState<SurveyData>({
     age: '',
@@ -73,11 +76,19 @@ export default function SurveyModal({ isOpen, onComplete, isManualTrigger = fals
       }
       
       onComplete();
+      // 問卷完成後不跳轉，留在當前頁面
     } catch (error) {
       console.error('提交問卷失敗:', error);
       alert('提交失敗，請重試');
     }
     setIsSubmitting(false);
+  };
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+    // 關閉問卷時不跳轉，留在當前頁面
   };
 
   const steps = [
@@ -452,7 +463,19 @@ export default function SurveyModal({ isOpen, onComplete, isManualTrigger = fals
   return (
     <div className="fixed inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b">
+        <div className="p-6 border-b relative">
+          {/* 關閉按鈕 */}
+          {onClose && (
+            <button
+              onClick={handleClose}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="關閉問卷"
+            >
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
           <h2 className="text-2xl font-bold text-gray-800">日文學習App事前問卷調查</h2>
           <p className="text-gray-600 mt-3">
             您好！我們正在開發一款專為在日留學生設計的日語學習App，透過AI技術幫助您快速適應日本生活。您的經驗分享將幫助我們打造真正實用的產品！問卷約需5分鐘，感謝您的參與！
