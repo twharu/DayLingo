@@ -1,113 +1,120 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import SurveyModal from '@/lib/components/SurveyModal';
+import HamburgerMenu from '@/lib/components/HamburgerMenu';
 
 // 預設情境單字資料
 const essentialWords = {
   '區役所/市役所手續': {
-    icon: '📋',
     tips: [
-      '⚠️ 到達日本後14天內必須辦理轉入手續',
-      '📝 準備文件：在留卡、護照、租房契約書',
-      '🕐 營業時間通常是平日 8:30-17:15，中午可能休息',
-      '💰 多數手續免費，但影印費用需自付（一張10日圓）'
+      '到達日本後14天內必須辦理遷入手續',
+      '準備文件：在留卡、護照、學生證/在學證明、印章',
+      '留學生可以申請國民健康保險減免及年金暫緩繳交'
     ],
     words: [
       { word: '住民票', reading: 'じゅうみんひょう', meaning: '住民票' },
       { word: '転入届', reading: 'てんにゅうとどけ', meaning: '遷入申請書' },
-      { word: '転出届', reading: 'てんしゅつとどけ', meaning: '遷出申請書' },
+      { word: '印鑑', reading: 'いんかん', meaning: '印章' },
       { word: '印鑑登録', reading: 'いんかんとうろく', meaning: '印章登記' },
       { word: '身分証明書', reading: 'みぶんしょうめいしょ', meaning: '身分證明文件' },
       { word: '在留カード', reading: 'ざいりゅうカード', meaning: '在留卡' },
+      { word: '学生証', reading: 'がくせいしょう', meaning: '學生證' },
+      { word: 'マイナンバーカード', reading: 'まいなんばーかーど', meaning: '日本的個人號碼卡（類似身分證）' },
       { word: '国民健康保険', reading: 'こくみんけんこうほけん', meaning: '國民健康保險' },
       { word: '年金', reading: 'ねんきん', meaning: '年金' },
-      { word: '手続き', reading: 'てつづき', meaning: '手續、申請' },
+      { word: '学生納付特例', reading: 'がくせいのうふとくれい', meaning: '學生繳納特例' },
+      { word: '減免申請', reading: 'げんめんしんせい', meaning: '減免申請' },
+      { word: '手続きをする', reading: 'てつづきをする', meaning: '辦手續、申請' },
       { word: '申請書', reading: 'しんせいしょ', meaning: '申請書' },
       { word: '窓口', reading: 'まどぐち', meaning: '櫃檯' },
       { word: '受付', reading: 'うけつけ', meaning: '受理、接待' },
     ],
     phrases: [
-      '住民票をお願いします - 請給我住民票',
       '転入届を出したいです - 我想要提出遷入申請',
-      'どこで手続きできますか - 在哪裡可以辦理手續？',
+      '学生納付特例を申請したいです - 我想要申請學生繳納特例',
+      '減免申請をしたいです - 我想要申請減免',
     ]
   },
   '租房找房': {
-    icon: '🏠',
     tips: [
-      '💰 初期費用通常是房租的3-6倍（敷金+禮金+仲介費+首月房租）',
-      '📋 需要保證人或保證公司，外國人多使用保證公司',
-      '🔍 可利用 Suumo、at home 等網站找房',
-      '⚠️ 注意管理費、停車費等額外費用'
+      '初期費用通常是房租的3-6倍（敷金+禮金+仲介費+首月房租）',
+      '需要保證人或保證公司，外國人多使用保證公司',
+      '租屋後，水電瓦斯需自己打電話或線上申請開通',
+      '可利用 Suumo、at home 等網站找房',
+      '注意管理費、停車費等額外費用'
     ],
     words: [
       { word: '賃貸', reading: 'ちんたい', meaning: '租賃' },
-      { word: '敷金', reading: 'しききん', meaning: '押金' },
-      { word: '礼金', reading: 'れいきん', meaning: '禮金' },
+      { word: '敷金', reading: 'しききん', meaning: '押金（退租可能退回一部分）' },
+      { word: '礼金', reading: 'れいきん', meaning: '禮金（送給房東，通常不退還）' },
+      { word: '更新料', reading: 'こうしんりょう', meaning: '租約更新費（續約時需支付）' },
       { word: '仲介手数料', reading: 'ちゅうかいてすうりょう', meaning: '仲介手續費' },
+      { word: '火災保険', reading: 'かさいほけん', meaning: '火災保險' },
       { word: '家賃', reading: 'やちん', meaning: '房租' },
       { word: '管理費', reading: 'かんりひ', meaning: '管理費' },
+      { word: '共益費', reading: 'きょうえきひ', meaning: '共益費' },
       { word: '契約書', reading: 'けいやくしょ', meaning: '契約書' },
       { word: '保証人', reading: 'ほしょうにん', meaning: '保證人' },
-      { word: '不動産', reading: 'ふどうさん', meaning: '房地產' },
+      { word: '保証会社', reading: 'ほしょうかいしゃ', meaning: '保證公司' },
+      { word: '不動産屋', reading: 'ふどうさんや', meaning: '房仲業者' },
       { word: 'ワンルーム', reading: 'ワンルーム', meaning: '套房' },
       { word: '駅近', reading: 'えきちか', meaning: '靠近車站' },
       { word: '内見', reading: 'ないけん', meaning: '看房' },
+      { word: '電気', reading: 'でんき', meaning: '電力' },
+      { word: 'ガス', reading: 'がす', meaning: '瓦斯' },
+      { word: '水道', reading: 'すいどう', meaning: '自來水' },
+      { word: 'インターネット', reading: 'いんたーねっと', meaning: '網路' },
+      { word: '開通手続き', reading: 'かいつうてつづき', meaning: '開通手續' },
     ],
     phrases: [
       '部屋を探しています - 我在找房子',
       '内見をお願いします - 請讓我看房',
-      '家賃はいくらですか - 房租多少錢？',
+      'この部屋を見学できますか - 我可以看這間房子嗎？',
+      '更新料はいくらですか - 租約更新費多少錢？'
     ]
   },
   '便利商店購物': {
-    icon: '🏪',
     tips: [
-      '🍱 便當可免費加熱，說「温めてください」',
-      '💳 多數支援信用卡和電子支付',
-      '🎫 可代收包裹、繳費、購買車票等',
-      '🛍️ 塑膠袋需付費（3-5日圓）'
+      '塑膠袋需付費（3-5日圓）',
+      '可以繳水電瓦斯費、購買車票等',
+      '可以影印、列印住民票'
+
     ],
     words: [
-      { word: 'コンビニ', reading: 'コンビニ', meaning: '便利商店' },
-      { word: '弁当', reading: 'べんとう', meaning: '便當' },
       { word: 'おにぎり', reading: 'おにぎり', meaning: '飯糰' },
-      { word: 'パン', reading: 'パン', meaning: '麵包' },
-      { word: '飲み物', reading: 'のみもの', meaning: '飲料' },
-      { word: 'お菓子', reading: 'おかし', meaning: '零食' },
-      { word: 'レジ', reading: 'レジ', meaning: '收銀台' },
-      { word: 'レシート', reading: 'レシート', meaning: '收據' },
+      { word: 'レジ', reading: 'れじ', meaning: '收銀台' },
+      { word: 'レシート', reading: 'れしーと', meaning: '收據' },
       { word: '袋', reading: 'ふくろ', meaning: '袋子' },
-      { word: '温める', reading: 'あたためる', meaning: '加熱' },
       { word: 'お箸', reading: 'おはし', meaning: '筷子' },
-      { word: 'スプーン', reading: 'スプーン', meaning: '湯匙' },
+      { word: 'スプーン', reading: 'すぷーん', meaning: '湯匙' },
+      { word: '温める', reading: 'あたためる', meaning: '加熱' },
+      { word: '住民票の写し', reading: 'じゅうみんひょうのうつし', meaning: '住民票影本' },
+      { word: 'ATM', reading: 'えーてぃーえむ', meaning: '提款機' },
+      { word: 'クレジットカード', reading: 'くれじっとかーど', meaning: '信用卡' },
+      { word: '電子マネー', reading: 'でんしまねー', meaning: '電子支付' },
+      { word: 'Suica/ICOCA', reading: 'すいか／いこか', meaning: '交通IC卡' }
+
     ],
     phrases: [
       '温めてください - 請幫我加熱',
       '袋はいりません - 不用袋子',
       'お箸をください - 請給我筷子',
+      'クレジットカードでお願いします - 我要用信用卡付款',
+      'Suicaで払います - 用Suica支付',
+      '住民票を印刷したいです - 我想列印住民票'
     ]
   },
   '餐廳點餐': {
-    icon: '🍜',
     tips: [
-      '🍽️ 很多餐廳有圖片菜單，指著點也OK',
-      '💧 冰水通常免費，可說「お水ください」',
-      '🚫 一般不需要給小費',
-      '💳 結帳時到櫃台付款，不在座位上付'
+      '日本餐廳通常都是提供冰水，冰水的日文是「おひや」ㄝ，可以說「おひやください」',
     ],
     words: [
       { word: 'メニュー', reading: 'メニュー', meaning: '菜單' },
       { word: '注文', reading: 'ちゅうもん', meaning: '點餐' },
       { word: '定食', reading: 'ていしょく', meaning: '定食' },
-      { word: 'ラーメン', reading: 'ラーメン', meaning: '拉麵' },
-      { word: '寿司', reading: 'すし', meaning: '壽司' },
       { word: '天ぷら', reading: 'てんぷら', meaning: '天婦羅' },
-      { word: 'ご飯', reading: 'ごはん', meaning: '米飯' },
-      { word: '味噌汁', reading: 'みそしる', meaning: '味噌湯' },
       { word: 'お水', reading: 'おみず', meaning: '水' },
       { word: 'お会計', reading: 'おかいけい', meaning: '結帳' },
       { word: '現金', reading: 'げんきん', meaning: '現金' },
@@ -236,72 +243,22 @@ const essentialWords = {
 export default function EssentialWords() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [showSurvey, setShowSurvey] = useState(false);
-  const [showThankYou, setShowThankYou] = useState(false);
-
-  // 檢查是否需要顯示問卷
-  useEffect(() => {
-    const surveyCompleted = localStorage.getItem('surveyCompleted');
-    if (!surveyCompleted) {
-      // 延遲1秒後顯示問卷彈窗
-      const timer = setTimeout(() => {
-        setShowSurvey(true);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <SurveyModal 
-        isOpen={showSurvey}
-        onComplete={() => {
-          setShowSurvey(false);
-          setShowThankYou(true);
-          // 3秒後自動關閉感謝信息
-          setTimeout(() => {
-            setShowThankYou(false);
-          }, 3000);
-        }}
-        onClose={() => {
-          setShowSurvey(false);
-        }}
-      />
-      
-      {/* 感謝信息彈窗 */}
-      {showThankYou && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-8 max-w-md mx-4 text-center">
-            <div className="mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">感謝您的參與！</h3>
-              <p className="text-gray-600 leading-relaxed">
-                您的寶貴意見將幫助我們打造更符合留學生需求的日語學習工具。<br/>
-                祝您在日本的學習生活順利愉快！
+      <div className="max-w-6xl mx-auto">
+        <header className="py-8">
+          <div className="flex items-center justify-between">
+            <div className="text-center flex-1">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                新手必備單字集
+              </h1>
+              <p className="text-gray-600 text-lg">
+                剛到日本最常遇到的生活情境單字
               </p>
             </div>
-            <button
-              onClick={() => setShowThankYou(false)}
-              className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              開始學習日語
-            </button>
+            <HamburgerMenu currentPath="/essential-words" />
           </div>
-        </div>
-      )}
-      
-      <div className="max-w-6xl mx-auto">
-        <header className="py-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            新手必備單字集
-          </h1>
-          <p className="text-gray-600 text-lg">
-            剛到日本最常遇到的生活情境單字
-          </p>
         </header>
 
         {!selectedCategory ? (

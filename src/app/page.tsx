@@ -6,6 +6,8 @@ import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import SurveyModal from '@/lib/components/SurveyModal';
+import HamburgerMenu from '@/lib/components/HamburgerMenu';
 
 export default function Home() {
   const router = useRouter();
@@ -29,6 +31,9 @@ export default function Home() {
   const [savingWords, setSavingWords] = useState<Set<number>>(new Set());
   const [savedWords, setSavedWords] = useState<Set<number>>(new Set());
   const contentRef = useRef<HTMLDivElement>(null);
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
+  const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
 
   useEffect(() => {
     // 從 localStorage 載入保存的內容
@@ -55,6 +60,24 @@ export default function Home() {
       } catch (error) {
         console.error('載入保存的表單資料失敗:', error);
       }
+    }
+    
+    // 預載語音庫
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+    
+    // 檢查是否需要顯示問卷
+    const surveyCompleted = localStorage.getItem('surveyCompleted');
+    if (!surveyCompleted) {
+      // 延遲1秒後顯示問卷彈窗
+      const timer = setTimeout(() => {
+        setShowSurvey(true);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -261,10 +284,124 @@ export default function Home() {
     });
   };
 
+  const preprocessJapaneseText = (text: string) => {
+    // 針對常見的日語發音問題做預處理
+    let processedText = text;
+    
+    // 拗音處理 - 使用片假名和更強的分隔
+    const youonMappings: { [key: string]: string } = {
+      'しょ': 'シ　ョ',  // 使用片假名和全角空格
+      'しゅ': 'シ　ュ', 
+      'しゃ': 'シ　ャ',
+      'ちょ': 'チ　ョ',
+      'ちゅ': 'チ　ュ',
+      'ちゃ': 'チ　ャ',
+      'にょ': 'ニ　ョ',
+      'にゅ': 'ニ　ュ',
+      'にゃ': 'ニ　ャ',
+      'りょ': 'リ　ョ',
+      'りゅ': 'リ　ュ',
+      'りゃ': 'リ　ャ',
+      'みょ': 'ミ　ョ',
+      'みゅ': 'ミ　ュ',
+      'みゃ': 'ミ　ャ',
+      'びょ': 'ビ　ョ',
+      'びゅ': 'ビ　ュ',
+      'びゃ': 'ビ　ャ',
+      'ぴょ': 'ピ　ョ',
+      'ぴゅ': 'ピ　ュ',
+      'ぴゃ': 'ピ　ャ',
+      'きょ': 'キ　ョ',
+      'きゅ': 'キ　ュ',
+      'きゃ': 'キ　ャ',
+      'ぎょ': 'ギ　ョ',
+      'ぎゅ': 'ギ　ュ',
+      'ぎゃ': 'ギ　ャ',
+      'ひょ': 'ヒ　ョ',
+      'ひゅ': 'ヒ　ュ',
+      'ひゃ': 'ヒ　ャ'
+    };
+    
+    // 長音處理 - 讓長音更自然
+    const choonMappings: { [key: string]: string } = {
+      'とう': 'とお',
+      'こう': 'こお',
+      'そう': 'そお', 
+      'ろう': 'ろお',
+      'どう': 'どお',
+      'ぼう': 'ぼお',
+      'もう': 'もお',
+      'よう': 'よお',
+      'ほう': 'ほお'
+    };
+    
+    // 應用拗音處理
+    Object.keys(youonMappings).forEach(key => {
+      const regex = new RegExp(key, 'g');
+      processedText = processedText.replace(regex, youonMappings[key]);
+    });
+    
+    // 應用長音處理
+    Object.keys(choonMappings).forEach(key => {
+      const regex = new RegExp(key, 'g');
+      processedText = processedText.replace(regex, choonMappings[key]);
+    });
+    
+    return processedText;
+  };
+
+  const playSound = (text: string) => {
+    if ('speechSynthesis' in window) {
+      // 停止當前播放
+      window.speechSynthesis.cancel();
+      
+      // 預處理日語文字
+      const processedText = preprocessJapaneseText(text);
+      console.log('原文:', text, '處理後:', processedText);
+      
+      const utterance = new SpeechSynthesisUtterance(processedText);
+      utterance.lang = 'ja-JP'; // 設定為日語
+      utterance.rate = 0.5; // 非常慢的語速，便於學習
+      utterance.volume = 0.8; // 音量
+      utterance.pitch = 1.0; // 語調高度 (0.1-2.0)
+      
+      // 嘗試找到日語女聲 (優先女聲)
+      const voices = window.speechSynthesis.getVoices();
+      
+      // 按優先級排序尋找女聲
+      const femaleVoice = 
+        // 1. 尋找日語女聲 (包含 Female 關鍵字)
+        voices.find(voice => voice.lang.includes('ja') && voice.name.includes('Female')) ||
+        // 2. 尋找 Kyoko (macOS 日語女聲)
+        voices.find(voice => voice.lang.includes('ja') && voice.name.includes('Kyoko')) ||
+        // 3. 尋找其他常見的日語女聲名稱
+        voices.find(voice => voice.lang.includes('ja') && (
+          voice.name.includes('女性') || 
+          voice.name.includes('Otoya') || 
+          voice.name.includes('Sayaka') ||
+          voice.name.includes('Haruka')
+        )) ||
+        // 4. 尋找原生日語語音 (本地安裝)
+        voices.find(voice => voice.lang === 'ja-JP' && voice.localService) ||
+        // 5. 任何日語語音
+        voices.find(voice => voice.lang.includes('ja'));
+      
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+        console.log('使用語音:', femaleVoice.name, femaleVoice.lang);
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert('您的瀏覽器不支援語音播放功能');
+    }
+  };
+
   const clearContent = () => {
     setContent(null);
     setParsedWords([]);
     setSavedWords(new Set());
+    setSelectedWordIndex(null);
     setSelectedDate(getTodayDate());
     setSelectedCategory('');
     setTaskName('');
@@ -275,6 +412,47 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+      <SurveyModal
+        isOpen={showSurvey}
+        onComplete={() => {
+          setShowSurvey(false);
+          setShowThankYou(true);
+          // 3秒後自動關閉感謝信息
+          setTimeout(() => {
+            setShowThankYou(false);
+          }, 3000);
+        }}
+        onClose={() => {
+          setShowSurvey(false);
+        }}
+      />
+
+      {/* 感謝信息彈窗 */}
+      {showThankYou && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-8 max-w-md mx-4 text-center">
+            <div className="mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">感謝您的參與！</h3>
+              <p className="text-gray-600 leading-relaxed">
+                您的寶貴意見將幫助我們打造更符合留學生需求的日語學習工具。<br />
+                祝您在日本的學習生活順利愉快！
+              </p>
+            </div>
+            <button
+              onClick={() => setShowThankYou(false)}
+              className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              開始學習日語
+            </button>
+          </div>
+        </div>
+      )}
+
       
       <div className="max-w-4xl mx-auto">
         <header className="py-8">
@@ -287,28 +465,11 @@ export default function Home() {
                 記錄你的日常任務，AI會生成相關的日語學習內容
               </p>
             </div>
-            <div className="flex gap-3">
-              <Link 
-                href="/essential-words"
-                className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                新手必備
-              </Link>
-              <Link 
-                href="/vocabulary"
-                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                單字庫
-              </Link>
-              {content && (
-                <button
-                  onClick={clearContent}
-                  className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  重新開始
-                </button>
-              )}
-            </div>
+            <HamburgerMenu 
+              currentPath="/"
+              hasContent={!!content}
+              onClearContent={clearContent}
+            />
           </div>
         </header>
 
@@ -401,46 +562,43 @@ export default function Home() {
             {parsedWords.length > 0 && (
               <div className="bg-white rounded-lg shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">重要詞組 - 點擊收藏</h2>
-                <div className="grid gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                   {parsedWords.map((word, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center mb-2">
-                            <h3 className="text-xl font-bold text-gray-800 mr-4">
-                              {word.word} - {word.meaning}
-                            </h3>
-                          </div>
-                          <p className="text-blue-600 font-medium mb-2 flex items-center">
+                    <div 
+                      key={index} 
+                      className="border border-gray-200 rounded-lg p-3 md:p-4 hover:border-blue-300 transition-colors cursor-pointer aspect-square flex items-center justify-center"
+                      onClick={() => setSelectedWordIndex(index)}
+                    >
+                      <div className="text-center w-full">
+                        <h3 className="text-base md:text-lg font-bold text-gray-800 mb-1 md:mb-2">
+                          {word.word}
+                        </h3>
+                        <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-2">{word.meaning}</p>
+                        <p className="text-blue-600 font-medium mb-2 md:mb-3 flex items-center justify-center text-sm">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playSound(word.reading);
+                            }}
+                            className="mr-1 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
+                            title="播放讀音"
+                          >
                             <Image 
                               src="/icons/volume.svg" 
-                              alt="讀音" 
-                              width={18} 
-                              height={18} 
-                              className="mr-2"
+                              alt="播放讀音" 
+                              width={14} 
+                              height={14}
                             />
-                            {word.reading}
-                          </p>
-                          {word.example && (
-                            <div className="bg-gray-50 p-3 rounded">
-                              <p className="text-gray-800 mb-1">
-                                <span className="font-medium">例句：</span>
-                                <span 
-                                  className="ruby-content"
-                                  dangerouslySetInnerHTML={{ __html: word.example }}
-                                  style={{ fontSize: '16px', lineHeight: '1.8' }}
-                                />
-                              </p>
-                              <p className="text-gray-600">
-                                <span className="font-medium">翻譯：</span>{word.exampleTranslation}
-                              </p>
-                            </div>
-                          )}
-                        </div>
+                          </button>
+                          <span className="text-xs md:text-sm">{word.reading}</span>
+                        </p>
                         <button
-                          onClick={() => saveWord(index)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            saveWord(index);
+                          }}
                           disabled={savingWords.has(index) || savedWords.has(index)}
-                          className={`ml-4 px-4 py-2 rounded-lg transition-colors ${
+                          className={`w-full px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors text-xs md:text-sm ${
                             savedWords.has(index) 
                               ? 'bg-green-600 text-white cursor-default' 
                               : savingWords.has(index)
@@ -453,6 +611,107 @@ export default function Home() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* 例句彈窗 */}
+            {selectedWordIndex !== null && parsedWords[selectedWordIndex] && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setSelectedWordIndex(null)}>
+                <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                        {parsedWords[selectedWordIndex].word}
+                      </h3>
+                      <p className="text-lg text-gray-600 mb-3">{parsedWords[selectedWordIndex].meaning}</p>
+                      <p className="text-blue-600 font-medium flex items-center">
+                        <button
+                          onClick={() => playSound(parsedWords[selectedWordIndex].reading)}
+                          className="mr-2 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
+                          title="播放讀音"
+                        >
+                          <Image 
+                            src="/icons/volume.svg" 
+                            alt="播放讀音" 
+                            width={18} 
+                            height={18}
+                          />
+                        </button>
+                        {parsedWords[selectedWordIndex].reading}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedWordIndex(null)}
+                      className="text-gray-400 hover:text-gray-600 text-2xl"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  {parsedWords[selectedWordIndex].example && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-800">例句：</h4>
+                        <button
+                          onClick={() => {
+                            // 正確處理 ruby 標籤：提取漢字部分，移除讀音標注
+                            let cleanExample = parsedWords[selectedWordIndex].example;
+                            // 將 <ruby>漢字<rt>讀音</rt></ruby> 替換為 漢字
+                            cleanExample = cleanExample.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
+                            // 移除其他 HTML 標籤
+                            cleanExample = cleanExample.replace(/<[^>]*>/g, '');
+                            console.log('播放例句:', cleanExample);
+                            playSound(cleanExample);
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm"
+                          title="播放例句"
+                        >
+                          <Image 
+                            src="/icons/volume.svg" 
+                            alt="播放例句" 
+                            width={16} 
+                            height={16}
+                          />
+                          播放
+                        </button>
+                      </div>
+                      <p className="text-gray-800 mb-3 text-lg leading-relaxed">
+                        <span 
+                          className="ruby-content"
+                          dangerouslySetInnerHTML={{ __html: parsedWords[selectedWordIndex].example }}
+                          style={{ fontSize: '18px', lineHeight: '2' }}
+                        />
+                      </p>
+                      <h4 className="font-medium text-gray-800 mb-2">翻譯：</h4>
+                      <p className="text-gray-600 text-lg">{parsedWords[selectedWordIndex].exampleTranslation}</p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 flex gap-3">
+                    <button
+                      onClick={() => {
+                        saveWord(selectedWordIndex);
+                        setSelectedWordIndex(null);
+                      }}
+                      disabled={savingWords.has(selectedWordIndex) || savedWords.has(selectedWordIndex)}
+                      className={`flex-1 px-4 py-3 rounded-lg transition-colors ${
+                        savedWords.has(selectedWordIndex) 
+                          ? 'bg-green-600 text-white cursor-default' 
+                          : savingWords.has(selectedWordIndex)
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      {savingWords.has(selectedWordIndex) ? '儲存中...' : savedWords.has(selectedWordIndex) ? '已收藏' : '收藏這個詞組'}
+                    </button>
+                    <button
+                      onClick={() => setSelectedWordIndex(null)}
+                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      關閉
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
