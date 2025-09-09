@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
 
 // 預設情境單字資料
@@ -244,37 +245,150 @@ export default function EssentialWords() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const preprocessJapaneseText = (text: string) => {
+    // 針對常見的日語發音問題做預處理
+    let processedText = text;
+    
+    // 拗音處理 - 使用片假名和更強的分隔
+    const youonMappings: { [key: string]: string } = {
+      'しょ': 'シ　ョ',  // 使用片假名和全角空格
+      'しゅ': 'シ　ュ', 
+      'しゃ': 'シ　ャ',
+      'ちょ': 'チ　ョ',
+      'ちゅ': 'チ　ュ',
+      'ちゃ': 'チ　ャ',
+      'にょ': 'ニ　ョ',
+      'にゅ': 'ニ　ュ',
+      'にゃ': 'ニ　ャ',
+      'りょ': 'リ　ョ',
+      'りゅ': 'リ　ュ',
+      'りゃ': 'リ　ャ',
+      'みょ': 'ミ　ョ',
+      'みゅ': 'ミ　ュ',
+      'みゃ': 'ミ　ャ',
+      'びょ': 'ビ　ョ',
+      'びゅ': 'ビ　ュ',
+      'びゃ': 'ビ　ャ',
+      'ぴょ': 'ピ　ョ',
+      'ぴゅ': 'ピ　ュ',
+      'ぴゃ': 'ピ　ャ',
+      'きょ': 'キ　ョ',
+      'きゅ': 'キ　ュ',
+      'きゃ': 'キ　ャ',
+      'ぎょ': 'ギ　ョ',
+      'ぎゅ': 'ギ　ュ',
+      'ぎゃ': 'ギ　ャ',
+      'ひょ': 'ヒ　ョ',
+      'ひゅ': 'ヒ　ュ',
+      'ひゃ': 'ヒ　ャ'
+    };
+    
+    // 長音處理 - 讓長音更自然
+    const choonMappings: { [key: string]: string } = {
+      'とう': 'とお',
+      'こう': 'こお',
+      'そう': 'そお', 
+      'ろう': 'ろお',
+      'どう': 'どお',
+      'ぼう': 'ぼお',
+      'もう': 'もお',
+      'よう': 'よお',
+      'ほう': 'ほお'
+    };
+    
+    // 應用拗音處理
+    Object.keys(youonMappings).forEach(key => {
+      const regex = new RegExp(key, 'g');
+      processedText = processedText.replace(regex, youonMappings[key]);
+    });
+    
+    // 應用長音處理
+    Object.keys(choonMappings).forEach(key => {
+      const regex = new RegExp(key, 'g');
+      processedText = processedText.replace(regex, choonMappings[key]);
+    });
+    
+    return processedText;
+  };
+
+  const playSound = (text: string) => {
+    if ('speechSynthesis' in window) {
+      // 停止當前播放
+      window.speechSynthesis.cancel();
+      
+      // 預處理日語文字
+      const processedText = preprocessJapaneseText(text);
+      console.log('原文:', text, '處理後:', processedText);
+      
+      const utterance = new SpeechSynthesisUtterance(processedText);
+      utterance.lang = 'ja-JP'; // 設定為日語
+      utterance.rate = 0.5; // 非常慢的語速，便於學習
+      utterance.volume = 0.8; // 音量
+      utterance.pitch = 1.0; // 語調高度 (0.1-2.0)
+      
+      // 嘗試找到日語女聲 (優先女聲)
+      const voices = window.speechSynthesis.getVoices();
+      
+      // 按優先級排序尋找女聲
+      const femaleVoice = 
+        // 1. 尋找日語女聲 (包含 Female 關鍵字)
+        voices.find(voice => voice.lang.includes('ja') && voice.name.includes('Female')) ||
+        // 2. 尋找 Kyoko (macOS 日語女聲)
+        voices.find(voice => voice.lang.includes('ja') && voice.name.includes('Kyoko')) ||
+        // 3. 尋找其他常見的日語女聲名稱
+        voices.find(voice => voice.lang.includes('ja') && (
+          voice.name.includes('女性') || 
+          voice.name.includes('Otoya') || 
+          voice.name.includes('Sayaka') ||
+          voice.name.includes('Haruka')
+        )) ||
+        // 4. 尋找原生日語語音 (本地安裝)
+        voices.find(voice => voice.lang === 'ja-JP' && voice.localService) ||
+        // 5. 任何日語語音
+        voices.find(voice => voice.lang.includes('ja'));
+      
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+        console.log('使用語音:', femaleVoice.name, femaleVoice.lang);
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert('您的瀏覽器不支援語音播放功能');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-3 sm:p-4">
       <div className="max-w-6xl mx-auto">
-        <header className="py-8">
-          <div className="flex items-center justify-between">
-            <div className="text-center flex-1">
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                新手必備單字集
+        <header className="py-6 sm:py-8">
+          <div className="flex items-start justify-between">
+            <div className="text-center flex-1 pr-4">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 sm:mb-3 leading-tight">
+                新手必備單字
               </h1>
-              <p className="text-gray-600 text-lg">
+              <p className="text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
                 剛到日本最常遇到的生活情境單字
               </p>
             </div>
-            <HamburgerMenu currentPath="/essential-words" />
+            <div className="flex-shrink-0">
+              <HamburgerMenu currentPath="/essential-words" />
+            </div>
           </div>
         </header>
 
         {!selectedCategory ? (
           /* 情境選擇頁面 */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 mb-6 sm:mb-8">
             {Object.entries(essentialWords).map(([category, data]) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-left"
+                className="bg-white rounded-lg shadow-lg p-3 sm:p-4 hover:shadow-xl active:shadow-md transition-all duration-300 hover:-translate-y-1 active:translate-y-0 min-h-[70px] sm:min-h-[80px] flex items-center justify-center touch-manipulation"
               >
-                <div className="text-4xl mb-4">{data.icon}</div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">{category}</h3>
-                <p className="text-gray-600">
-                  {data.words.length} 個常用單字
-                </p>
+                <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 leading-tight text-center">
+                  {category}
+                </h3>
               </button>
             ))}
           </div>
@@ -284,38 +398,76 @@ export default function EssentialWords() {
             {/* 返回按鈕 */}
             <button
               onClick={() => setSelectedCategory(null)}
-              className="mb-6 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors flex items-center"
+              className="mb-4 sm:mb-6 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 px-4 sm:px-6 py-3 sm:py-2 rounded-xl transition-colors flex items-center text-base sm:text-sm font-medium touch-manipulation"
             >
-              <span className="mr-2">←</span>
+              <span className="mr-2 text-lg sm:text-base">←</span>
               返回選擇情境
             </button>
 
-            {/* 情境標題 */}
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-              <div className="flex items-center mb-4">
-                <span className="text-5xl mr-4">
-                  {essentialWords[selectedCategory].icon}
-                </span>
-                <h2 className="text-3xl font-bold text-gray-800">
+            {/* 情境標題和提示 */}
+            <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-6 sm:mb-8">
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 leading-tight">
                   {selectedCategory}
                 </h2>
               </div>
+              
+              {/* 實用提示 */}
+              {essentialWords[selectedCategory].tips && (
+                <div className="bg-blue-50 rounded-lg p-4 sm:p-5">
+                  <h4 className="font-bold text-blue-800 mb-3">
+                    實用提示
+                  </h4>
+                  <div className="space-y-2">
+                    {essentialWords[selectedCategory].tips.map((tip, index) => (
+                      <p key={index} className="text-blue-700 text-sm sm:text-base leading-relaxed">
+                        • {tip}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 單字列表 */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6">常用單字</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8">
+              <div className="mb-4 sm:mb-6 px-2">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">常用單字</h3>
+                <p className="text-gray-500 text-xs sm:text-sm">
+                  點擊喇叭圖示聽讀音
+                </p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                 {essentialWords[selectedCategory].words.map((word, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                  <div 
+                    key={index}
+                    className="relative border-2 border-gray-200 rounded-lg p-2 sm:p-3 hover:border-blue-300 transition-all duration-200 min-h-[80px] sm:min-h-[90px] flex flex-col justify-center"
+                  >
                     <div className="text-center">
-                      <h4 className="text-xl font-bold text-gray-800 mb-2">
+                      <h4 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-1 leading-tight">
                         {word.word}
                       </h4>
-                      <p className="text-blue-600 font-medium mb-1">
-                        {word.reading}
-                      </p>
-                      <p className="text-gray-600 text-sm">
+                      <div className="flex items-center justify-center mb-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            playSound(word.reading);
+                          }}
+                          className="mr-1 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
+                          title="播放讀音"
+                        >
+                          <Image 
+                            src="/icons/volume.svg" 
+                            alt="播放讀音" 
+                            width={12} 
+                            height={12}
+                          />
+                        </button>
+                        <p className="text-blue-600 font-semibold text-sm sm:text-base">
+                          {word.reading}
+                        </p>
+                      </div>
+                      <p className="text-gray-700 text-xs leading-relaxed px-1">
                         {word.meaning}
                       </p>
                     </div>
@@ -325,32 +477,71 @@ export default function EssentialWords() {
             </div>
 
             {/* 常用句型 */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6">實用句型</h3>
-              <div className="space-y-4">
-                {essentialWords[selectedCategory].phrases.map((phrase, index) => (
-                  <div key={index} className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-lg text-gray-800">
-                      {phrase}
-                    </p>
-                  </div>
-                ))}
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8">
+              <div className="mb-4 sm:mb-6 px-2">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">實用句型</h3>
+                <p className="text-gray-500 text-xs sm:text-sm">
+                  點擊喇叭圖示聽句子發音
+                </p>
+              </div>
+              <div className="space-y-3 sm:space-y-4">
+                {essentialWords[selectedCategory].phrases.map((phrase, index) => {
+                  // 分離日文和中文部分
+                  const parts = phrase.split(' - ');
+                  const japanesePart = parts[0]?.trim() || phrase;
+                  const chinesePart = parts[1]?.trim();
+                  
+                  return (
+                    <div 
+                      key={index} 
+                      className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 sm:p-5 rounded-xl border border-blue-100 hover:border-blue-200 transition-all duration-200"
+                    >
+                      <div className="flex items-start gap-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            playSound(japanesePart);
+                          }}
+                          className="flex-shrink-0 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100 mt-1"
+                          title="播放句子"
+                        >
+                          <Image 
+                            src="/icons/volume.svg" 
+                            alt="播放句子" 
+                            width={16} 
+                            height={16}
+                          />
+                        </button>
+                        <div className="flex-1">
+                          <p className="text-base sm:text-lg text-gray-800 leading-relaxed font-medium mb-1">
+                            {japanesePart}
+                          </p>
+                          {chinesePart && (
+                            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                              {chinesePart}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         )}
 
         {/* 底部導航 */}
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 text-center mt-8 sm:mt-12">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
             找不到你要學的內容嗎？
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base leading-relaxed">
             前往自訂學習內容，AI會為你生成專屬的日語學習材料
           </p>
           <Link
             href="/"
-            className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg"
+            className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 transition-all duration-200 font-semibold text-base sm:text-lg touch-manipulation shadow-lg hover:shadow-xl"
           >
             前往自訂學習內容
           </Link>

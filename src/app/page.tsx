@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import SurveyModal from '@/lib/components/SurveyModal';
+import PostUsageSurvey from '@/lib/components/PostUsageSurvey';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
 
 export default function Home() {
@@ -26,14 +27,17 @@ export default function Home() {
   const [taskName, setTaskName] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
   const [loading, setLoading] = useState(false);
-  const [content, setContent] = useState<any>(null);
-  const [parsedWords, setParsedWords] = useState<any[]>([]);
+  const [content, setContent] = useState<{content: string} | null>(null);
+  const [parsedWords, setParsedWords] = useState<{word: string, reading: string, meaning: string, example: string, exampleTranslation: string}[]>([]);
   const [savingWords, setSavingWords] = useState<Set<number>>(new Set());
   const [savedWords, setSavedWords] = useState<Set<number>>(new Set());
   const contentRef = useRef<HTMLDivElement>(null);
   const [showSurvey, setShowSurvey] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [voiceUsageCount, setVoiceUsageCount] = useState(0);
+  const [showPostSurvey, setShowPostSurvey] = useState(false);
 
   useEffect(() => {
     // 從 localStorage 載入保存的內容
@@ -79,7 +83,28 @@ export default function Home() {
       }, 1000);
       return () => clearTimeout(timer);
     }
+    
+    // 檢查是否需要顯示後問卷
+    checkPostSurveyTrigger();
   }, []);
+
+  // 頁面離開時記錄學習會話
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (sessionStartTime && content) {
+        recordLearningSession();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // 組件卸載時也記錄
+      if (sessionStartTime && content) {
+        recordLearningSession();
+      }
+    };
+  }, [sessionStartTime, content, selectedCategory, taskName, parsedWords.length, savedWords.size, voiceUsageCount]);
 
   const categories = [
     '日常生活',
@@ -122,6 +147,14 @@ export default function Home() {
         const data = await response.json();
         setContent(data);
         parseWords(data.content);
+        
+        // 開始學習會話時間記錄
+        setSessionStartTime(new Date());
+        setVoiceUsageCount(0);
+        setSavedWords(new Set());
+        
+        // 增加使用次數
+        incrementUsageCount();
         
         // 儲存生成的內容到 localStorage
         localStorage.setItem('generatedContent', JSON.stringify(data));
@@ -350,8 +383,86 @@ export default function Home() {
     return processedText;
   };
 
+  // 生成匿名用戶ID
+  const getAnonymousUserId = () => {
+    let userId = localStorage.getItem('anonymousUserId');
+    if (!userId) {
+      userId = 'user_' + btoa(
+        navigator.userAgent.slice(0, 50) + 
+        Date.now().toString() + 
+        Math.random().toString()
+      ).slice(0, 16);
+      localStorage.setItem('anonymousUserId', userId);
+    }
+    return userId;
+  };
+
+  // 檢查是否需要觸發後問卷
+  const checkPostSurveyTrigger = () => {
+    const postSurveyCompleted = localStorage.getItem('postSurveyCompleted');
+    const usageCount = parseInt(localStorage.getItem('appUsageCount') || '0');
+    
+    // 如果後問卷已完成，不再顯示
+    if (postSurveyCompleted) return;
+    
+    // 如果使用次數達到2次或以上，顯示後問卷
+    if (usageCount >= 2) {
+      const timer = setTimeout(() => {
+        setShowPostSurvey(true);
+      }, 2000); // 延遲2秒顯示，讓用戶先看到內容
+      return () => clearTimeout(timer);
+    }
+  };
+
+  // 記錄app使用次數
+  const incrementUsageCount = () => {
+    const currentCount = parseInt(localStorage.getItem('appUsageCount') || '0');
+    const newCount = currentCount + 1;
+    localStorage.setItem('appUsageCount', newCount.toString());
+    console.log('App使用次數:', newCount);
+    
+    // 檢查是否需要顯示後問卷
+    if (newCount >= 2 && !localStorage.getItem('postSurveyCompleted')) {
+      setTimeout(() => {
+        setShowPostSurvey(true);
+      }, 3000); // 3秒後顯示後問卷
+    }
+  };
+
+  // 記錄學習會話
+  const recordLearningSession = async () => {
+    if (!sessionStartTime || !content) return;
+    
+    try {
+      const userId = getAnonymousUserId();
+      const now = new Date();
+      const studyTimeSeconds = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
+      
+      const sessionData = {
+        userId,
+        date: now.toISOString().split('T')[0], // YYYY-MM-DD
+        category: selectedCategory,
+        taskName: taskName,
+        wordsGenerated: parsedWords.length,
+        wordsSaved: savedWords.size,
+        studyTimeSeconds,
+        voiceUsageCount,
+        contentGeneratedAt: sessionStartTime.toISOString(),
+        sessionEndAt: now.toISOString()
+      };
+      
+      await addDoc(collection(db, 'learningSessions'), sessionData);
+      console.log('學習會話已記錄:', sessionData);
+    } catch (error) {
+      console.error('記錄學習會話失敗:', error);
+    }
+  };
+
   const playSound = (text: string) => {
     if ('speechSynthesis' in window) {
+      // 計數語音使用
+      setVoiceUsageCount(prev => prev + 1);
+      
       // 停止當前播放
       window.speechSynthesis.cancel();
       
@@ -397,11 +508,16 @@ export default function Home() {
     }
   };
 
-  const clearContent = () => {
+  const clearContent = async () => {
+    // 記錄學習會話（如果有進行中的會話）
+    await recordLearningSession();
+    
     setContent(null);
     setParsedWords([]);
     setSavedWords(new Set());
     setSelectedWordIndex(null);
+    setSessionStartTime(null);
+    setVoiceUsageCount(0);
     setSelectedDate(getTodayDate());
     setSelectedCategory('');
     setTaskName('');
@@ -426,6 +542,14 @@ export default function Home() {
           setShowSurvey(false);
         }}
       />
+
+      {/* 後問卷 */}
+      {showPostSurvey && (
+        <PostUsageSurvey
+          userId={getAnonymousUserId()}
+          onClose={() => setShowPostSurvey(false)}
+        />
+      )}
 
       {/* 感謝信息彈窗 */}
       {showThankYou && (
@@ -459,10 +583,10 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                日本留學生活日語學習
+                おはよう！早安！
               </h1>
               <p className="text-gray-600">
-                記錄你的日常任務，AI會生成相關的日語學習內容
+                記錄你的日常任務，AI會生成相關的日文詞彙
               </p>
             </div>
             <HamburgerMenu 

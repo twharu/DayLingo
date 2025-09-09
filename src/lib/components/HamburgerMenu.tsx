@@ -91,6 +91,19 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
                 </div>
               </Link>
               
+              <Link 
+                href="/statistics"
+                className="block p-4 rounded-lg transition-all duration-200 hover:bg-orange-50 relative group"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <div className="absolute inset-0 bg-orange-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
+                <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                <div className="relative">
+                  <h3 className="font-medium text-gray-800">學習統計</h3>
+                  <p className="text-sm text-gray-500">進度追蹤分析</p>
+                </div>
+              </Link>
+              
               {hasContent && onClearContent && (
                 <button
                   onClick={() => {
