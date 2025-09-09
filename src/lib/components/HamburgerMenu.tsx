@@ -61,7 +61,6 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
                 <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                 <div className="relative">
                   <h3 className="font-medium text-gray-800">首頁</h3>
-                  <p className="text-sm text-gray-500">AI 生成學習內容</p>
                 </div>
               </Link>
               
@@ -74,7 +73,6 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
                 <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                 <div className="relative">
                   <h3 className="font-medium text-gray-800">新手必備</h3>
-                  <p className="text-sm text-gray-500">基礎日語學習</p>
                 </div>
               </Link>
               
@@ -87,7 +85,6 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
                 <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                 <div className="relative">
                   <h3 className="font-medium text-gray-800">單字庫</h3>
-                  <p className="text-sm text-gray-500">收藏的單字</p>
                 </div>
               </Link>
               
@@ -100,7 +97,6 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
                 <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                 <div className="relative">
                   <h3 className="font-medium text-gray-800">學習統計</h3>
-                  <p className="text-sm text-gray-500">進度追蹤分析</p>
                 </div>
               </Link>
               

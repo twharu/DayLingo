@@ -277,6 +277,7 @@ export default function Home() {
       
       if (line.includes('## 日常對話')) {
         skipSection = false;
+        continue; // 跳過這個標題行
       }
       
       if (!skipSection) {
@@ -284,7 +285,7 @@ export default function Home() {
       }
     }
     
-    return filteredLines.join('\n');
+    return filteredLines.join('\n').trim();
   };
 
   const saveWord = async (wordIndex: number) => {
@@ -685,16 +686,21 @@ export default function Home() {
             {/* 單字收藏區域 */}
             {parsedWords.length > 0 && (
               <div className="bg-white rounded-lg shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">重要詞組 - 點擊收藏</h2>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">關聯詞彙</h2>
+                  <p className="text-gray-500 text-sm">
+                    點擊單字卡片可以查看例句和詳細資訊
+                  </p>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                   {parsedWords.map((word, index) => (
                     <div 
                       key={index} 
-                      className="border border-gray-200 rounded-lg p-3 md:p-4 hover:border-blue-300 transition-colors cursor-pointer aspect-square flex items-center justify-center"
+                      className="border border-gray-200 rounded-lg p-3 md:p-4 hover:border-blue-300 transition-colors cursor-pointer min-h-[120px] md:min-h-[140px] flex items-center justify-center"
                       onClick={() => setSelectedWordIndex(index)}
                     >
                       <div className="text-center w-full">
-                        <h3 className="text-base md:text-lg font-bold text-gray-800 mb-1 md:mb-2">
+                        <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 mb-1 md:mb-2">
                           {word.word}
                         </h3>
                         <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-2">{word.meaning}</p>
@@ -842,7 +848,7 @@ export default function Home() {
             
             {/* 完整內容顯示 */}
             <div className="bg-white rounded-lg shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">完整學習內容</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">對話例</h2>
               <div className="prose prose-lg max-w-none">
                 <div 
                   className="whitespace-pre-wrap text-gray-700 leading-relaxed ruby-content"

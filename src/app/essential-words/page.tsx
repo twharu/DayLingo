@@ -20,7 +20,7 @@ const essentialWords = {
       { word: '印鑑', reading: 'いんかん', meaning: '印章' },
       { word: '印鑑登録', reading: 'いんかんとうろく', meaning: '印章登記' },
       { word: '身分証明書', reading: 'みぶんしょうめいしょ', meaning: '身分證明文件' },
-      { word: '在留カード', reading: 'ざいりゅうカード', meaning: '在留卡' },
+      { word: '在留カード', reading: 'ざいりゅうかーど', meaning: '在留卡' },
       { word: '学生証', reading: 'がくせいしょう', meaning: '學生證' },
       { word: 'マイナンバーカード', reading: 'まいなんばーかーど', meaning: '日本的個人號碼卡（類似身分證）' },
       { word: '国民健康保険', reading: 'こくみんけんこうほけん', meaning: '國民健康保險' },
@@ -76,7 +76,7 @@ const essentialWords = {
       '更新料はいくらですか - 租約更新費多少錢？'
     ]
   },
-  '便利商店購物': {
+  '便利商店': {
     tips: [
       '塑膠袋需付費（3-5日圓）',
       '可以繳水電瓦斯費、購買車票等',
@@ -227,7 +227,7 @@ const essentialWords = {
       { word: '料金', reading: 'りょうきん', meaning: '費用' },
       { word: '月額', reading: 'げつがく', meaning: '月費' },
       { word: '通話', reading: 'つうわ', meaning: '通話' },
-      { word: 'データ', reading: 'データ', meaning: '數據' },
+      { word: 'データ', reading: 'でーた', meaning: '數據' },
       { word: 'Wi-Fi', reading: 'ワイファイ', meaning: 'Wi-Fi' },
       { word: 'SIMカード', reading: 'シムカード', meaning: 'SIM卡' },
       { word: '機種変更', reading: 'きしゅへんこう', meaning: '換機' },
@@ -534,10 +534,10 @@ export default function EssentialWords() {
         {/* 底部導航 */}
         <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 text-center mt-8 sm:mt-12">
           <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
-            找不到你要學的內容嗎？
+            找不到你要學的單字嗎？
           </h3>
           <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base leading-relaxed">
-            前往自訂學習內容，AI會為你生成專屬的日語學習材料
+            輸入每日任務，AI會為你生成專屬的日語學習內容
           </p>
           <Link
             href="/"
