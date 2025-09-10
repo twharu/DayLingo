@@ -115,17 +115,53 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                   </p>
                 </div>
                 <div>
-                  <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     時間
                   </label>
-                  <input
-                    type="time"
-                    id="time"
-                    value={selectedTime}
-                    onChange={(e) => setSelectedTime(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
+                  <div className="flex space-x-4">
+                    {/* 小時選擇 */}
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-600 mb-1">小時</label>
+                      <select
+                        value={selectedTime.split(':')[0]}
+                        onChange={(e) => {
+                          const minute = selectedTime.split(':')[1];
+                          setSelectedTime(`${e.target.value}:${minute}`);
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                        required
+                      >
+                        {Array.from({length: 24}, (_, i) => {
+                          const hour = i.toString().padStart(2, '0');
+                          return (
+                            <option key={hour} value={hour}>
+                              {hour}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                    
+                    {/* 分鐘選擇 */}
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-600 mb-1">分鐘</label>
+                      <select
+                        value={selectedTime.split(':')[1]}
+                        onChange={(e) => {
+                          const hour = selectedTime.split(':')[0];
+                          setSelectedTime(`${hour}:${e.target.value}`);
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                        required
+                      >
+                        {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(minute => (
+                          <option key={minute} value={minute}>
+                            {minute}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
