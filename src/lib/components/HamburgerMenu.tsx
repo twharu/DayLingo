@@ -89,6 +89,18 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
               </Link>
               
               <Link 
+                href="/calendar"
+                className="block p-4 rounded-lg transition-all duration-200 hover:bg-indigo-50 relative group"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <div className="absolute inset-0 bg-indigo-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
+                <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                <div className="relative">
+                  <h3 className="font-medium text-gray-800">學習日曆</h3>
+                </div>
+              </Link>
+              
+              <Link 
                 href="/statistics"
                 className="block p-4 rounded-lg transition-all duration-200 hover:bg-orange-50 relative group"
                 onClick={() => setIsMenuOpen(false)}

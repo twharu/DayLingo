@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import SurveyModal from '@/lib/components/SurveyModal';
 import PostUsageSurvey from '@/lib/components/PostUsageSurvey';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
+import MiniCalendar from '@/lib/components/MiniCalendar';
+import TaskDrawer from '@/lib/components/TaskDrawer';
 
 export default function Home() {
   const router = useRouter();
@@ -38,8 +40,26 @@ export default function Home() {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [voiceUsageCount, setVoiceUsageCount] = useState(0);
   const [showPostSurvey, setShowPostSurvey] = useState(false);
+  const [isTaskDrawerOpen, setIsTaskDrawerOpen] = useState(false);
+  const [currentTaskTime, setCurrentTaskTime] = useState<string | null>(null);
 
   useEffect(() => {
+    // 檢查是否為頁面重新整理 - 如果是，清空關聯詞彙
+    const navigation = (window as any).performance?.getEntriesByType?.('navigation')?.[0];
+    if (navigation?.type === 'reload') {
+      // 清空關聯詞彙相關的狀態和localStorage
+      setContent(null);
+      setParsedWords([]);
+      setSavedWords(new Set());
+      setSelectedWordIndex(null);
+      setSessionStartTime(null);
+      setCurrentTaskTime(null);
+      setVoiceUsageCount(0);
+      localStorage.removeItem('generatedContent');
+      localStorage.removeItem('formData');
+      return;
+    }
+    
     // 從 localStorage 載入保存的內容
     const savedContent = localStorage.getItem('generatedContent');
     const savedFormData = localStorage.getItem('formData');
@@ -61,6 +81,7 @@ export default function Home() {
         setSelectedCategory(parsedFormData.selectedCategory || '');
         setTaskName(parsedFormData.taskName || '');
         setTaskDescription(parsedFormData.taskDescription || '');
+        setCurrentTaskTime(parsedFormData.selectedTime || null);
       } catch (error) {
         console.error('載入保存的表單資料失敗:', error);
       }
@@ -119,70 +140,6 @@ export default function Home() {
     '緊急情況'
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedDate || !selectedCategory || !taskName.trim() || !taskDescription.trim()) {
-      alert('請填寫所有必填欄位');
-      return;
-    }
-
-    const fullTask = `
-日期: ${selectedDate}
-分類: ${selectedCategory}
-任務名稱: ${taskName}
-詳細描述: ${taskDescription}
-    `.trim();
-
-    setLoading(true);
-    try {
-      const response = await fetch('/api/generate-content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ task: fullTask }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setContent(data);
-        parseWords(data.content);
-        
-        // 開始學習會話時間記錄
-        setSessionStartTime(new Date());
-        setVoiceUsageCount(0);
-        setSavedWords(new Set());
-        
-        // 增加使用次數
-        incrementUsageCount();
-        
-        // 儲存生成的內容到 localStorage
-        localStorage.setItem('generatedContent', JSON.stringify(data));
-        
-        // 儲存表單資料到 localStorage
-        const formData = {
-          selectedDate,
-          selectedCategory,
-          taskName,
-          taskDescription
-        };
-        localStorage.setItem('formData', JSON.stringify(formData));
-        
-        // 等待一下讓內容渲染完成，然後滾動到內容區域
-        setTimeout(() => {
-          contentRef.current?.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }, 100);
-      } else {
-        alert('生成內容時發生錯誤');
-      }
-    } catch (error) {
-      alert('發生錯誤，請稍後再試');
-    }
-    setLoading(false);
-  };
 
   const parseWords = (content: string) => {
     const words = [];
@@ -442,6 +399,7 @@ export default function Home() {
       const sessionData = {
         userId,
         date: now.toISOString().split('T')[0], // YYYY-MM-DD
+        time: currentTaskTime || '09:00', // 任務時間
         category: selectedCategory,
         taskName: taskName,
         wordsGenerated: parsedWords.length,
@@ -518,6 +476,7 @@ export default function Home() {
     setSavedWords(new Set());
     setSelectedWordIndex(null);
     setSessionStartTime(null);
+    setCurrentTaskTime(null);
     setVoiceUsageCount(0);
     setSelectedDate(getTodayDate());
     setSelectedCategory('');
@@ -525,6 +484,95 @@ export default function Home() {
     setTaskDescription('');
     localStorage.removeItem('generatedContent');
     localStorage.removeItem('formData');
+  };
+
+  // 處理日曆日期點擊
+  const handleDateClick = (date: Date) => {
+    // 格式化日期為 YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    
+    // 設置選中的日期
+    setSelectedDate(dateString);
+    
+    // 開啟任務抽屜
+    setIsTaskDrawerOpen(true);
+  };
+
+  // 處理任務提交
+  const handleTaskSubmit = async (formData: {
+    selectedDate: string;
+    selectedTime: string;
+    selectedCategory: string;
+    taskName: string;
+    taskDescription: string;
+  }) => {
+    const { selectedDate: date, selectedTime, selectedCategory, taskName, taskDescription } = formData;
+    
+    const fullTask = `
+日期: ${date}
+時間: ${selectedTime}
+分類: ${selectedCategory}
+任務名稱: ${taskName}
+詳細描述: ${taskDescription}
+    `.trim();
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ task: fullTask }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setContent(data);
+        parseWords(data.content);
+        
+        // 開始學習會話時間記錄
+        setSessionStartTime(new Date());
+        setCurrentTaskTime(selectedTime);
+        setVoiceUsageCount(0);
+        setSavedWords(new Set());
+        
+        // 增加使用次數
+        incrementUsageCount();
+        
+        // 儲存生成的內容到 localStorage
+        localStorage.setItem('generatedContent', JSON.stringify(data));
+        
+        // 儲存表單資料到 localStorage
+        const formDataToSave = {
+          selectedDate: date,
+          selectedTime,
+          selectedCategory,
+          taskName,
+          taskDescription
+        };
+        localStorage.setItem('formData', JSON.stringify(formDataToSave));
+        
+        // 關閉抽屜
+        setIsTaskDrawerOpen(false);
+        
+        // 等待一下讓內容渲染完成，然後滾動到內容區域
+        setTimeout(() => {
+          contentRef.current?.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }, 100);
+      } else {
+        alert('生成內容時發生錯誤');
+      }
+    } catch (error) {
+      alert('發生錯誤，請稍後再試');
+    }
+    setLoading(false);
   };
 
   return (
@@ -598,88 +646,19 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 1. 選擇日期 */}
-            <div>
-              <label htmlFor="date" className="block text-lg font-medium text-gray-700 mb-3">
-                1. 選擇日期 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                id="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                required
-              />
-            </div>
-
-            {/* 2. 任務分類標籤 */}
-            <div>
-              <label htmlFor="category" className="block text-lg font-medium text-gray-700 mb-3">
-                2. 任務分類 <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="category"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                required
-              >
-                <option value="">請選擇分類...</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* 3. 任務名稱 */}
-            <div>
-              <label htmlFor="taskName" className="block text-lg font-medium text-gray-700 mb-3">
-                3. 任務名稱 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="taskName"
-                value={taskName}
-                onChange={(e) => setTaskName(e.target.value)}
-                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                placeholder="例如：便利商店購買日用品、餐廳點餐、問路等..."
-                required
-              />
-            </div>
-
-            {/* 4. 任務詳細描述 */}
-            <div>
-              <label htmlFor="taskDescription" className="block text-lg font-medium text-gray-700 mb-3">
-                4. 任務詳細描述 <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="taskDescription"
-                value={taskDescription}
-                onChange={(e) => setTaskDescription(e.target.value)}
-                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                rows={4}
-                placeholder="請詳細描述這個任務的情境、目的、可能遇到的狀況等..."
-                required
-              />
-            </div>
-
-            {/* 5. 送出按鈕 */}
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={loading || !selectedDate || !selectedCategory || !taskName.trim() || !taskDescription.trim()}
-                className="w-full bg-blue-600 text-white py-4 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium text-lg transition-colors"
-              >
-                {loading ? 'AI 生成學習內容中...' : '生成日語學習內容'}
-              </button>
-            </div>
-          </form>
+        {/* 小版日曆 */}
+        <div className="mb-6">
+          <MiniCalendar onDateClick={handleDateClick} />
         </div>
+
+        {/* 任務抽屜 */}
+        <TaskDrawer
+          isOpen={isTaskDrawerOpen}
+          onClose={() => setIsTaskDrawerOpen(false)}
+          selectedDate={selectedDate}
+          onSubmit={handleTaskSubmit}
+          loading={loading}
+        />
 
         {content && (
           <div ref={contentRef} className="space-y-6">
