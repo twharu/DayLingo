@@ -700,11 +700,7 @@ export default function Home() {
                       onClick={() => setSelectedWordIndex(index)}
                     >
                       <div className="text-center w-full">
-                        <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 mb-1 md:mb-2">
-                          {word.word}
-                        </h3>
-                        <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-2">{word.meaning}</p>
-                        <p className="text-blue-600 font-medium mb-2 md:mb-3 flex items-center justify-center text-sm">
+                        <p className="text-blue-600 font-medium mb-2 flex items-center justify-center text-sm">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -722,6 +718,10 @@ export default function Home() {
                           </button>
                           <span className="text-xs md:text-sm">{word.reading}</span>
                         </p>
+                        <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 mb-2 md:mb-3">
+                          {word.word}
+                        </h3>
+                        <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-2">{word.meaning}</p>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
