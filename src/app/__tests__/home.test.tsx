@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import Home from '../page';
 
 vi.mock('next/link', () => ({
-  default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: any }) => (
+  default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
     <a href={href} {...props}>{children}</a>
   ),
 }));
