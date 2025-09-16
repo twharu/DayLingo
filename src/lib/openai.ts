@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = process.env.NEXT_PUBLIC_TEST_MODE === 'true' 
+  ? null 
+  : new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
+    });
 
 // 分類上下文映射
 function getCategoryContext(category: string) {
@@ -22,6 +24,26 @@ function getCategoryContext(category: string) {
 }
 
 export async function generateJapaneseContent(taskData: string) {
+  // 測試模式返回假資料
+  if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' || !openai) {
+    return `## 重要詞組
+
+<ruby>買<rt>か</rt></ruby>い<ruby>物<rt>もの</rt></ruby>をする - 購物（日常用語）
+例句：<ruby>今日<rt>きょう</rt></ruby>は<ruby>買<rt>か</rt></ruby>い<ruby>物<rt>もの</rt></ruby>をします。- 今天要去購物。
+
+<ruby>商品<rt>しょうひん</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぶ - 選擇商品（一般用語）
+例句：いい<ruby>商品<rt>しょうひん</rt></ruby>を<ruby>選<rt>えら</rt></ruby>びたいです。- 想要選擇好的商品。
+
+## 日常對話
+
+A：いらっしゃいませ。
+B：すみません、これはいくらですか。
+A：それは<ruby>千円<rt>せんえん</rt></ruby>です。
+B：ありがとうございます。
+
+*這是測試模式的示範內容*`;
+  }
+
   try {
     // 解析任務資料
     const lines = taskData.split('\n');
