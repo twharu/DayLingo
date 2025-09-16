@@ -45,7 +45,7 @@ export default function Home() {
 
   useEffect(() => {
     // 檢查是否為頁面重新整理 - 如果是，清空關聯詞彙
-    const navigation = (window as Window & { performance: Performance }).performance?.getEntriesByType?.('navigation')?.[0];
+    const navigation = (window as Window & { performance: Performance }).performance?.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming;
     if (navigation?.type === 'reload') {
       // 清空關聯詞彙相關的狀態和localStorage
       setContent(null);
