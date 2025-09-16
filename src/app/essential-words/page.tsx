@@ -413,13 +413,13 @@ export default function EssentialWords() {
               </div>
               
               {/* 實用提示 */}
-              {essentialWords[selectedCategory].tips && (
+              {essentialWords[selectedCategory as keyof typeof essentialWords].tips && (
                 <div className="bg-blue-50 rounded-lg p-4 sm:p-5">
                   <h4 className="font-bold text-blue-800 mb-3">
                     實用提示
                   </h4>
                   <div className="space-y-2">
-                    {essentialWords[selectedCategory].tips.map((tip, index) => (
+                    {essentialWords[selectedCategory as keyof typeof essentialWords].tips.map((tip, index) => (
                       <p key={index} className="text-blue-700 text-sm sm:text-base leading-relaxed">
                         • {tip}
                       </p>
@@ -438,7 +438,7 @@ export default function EssentialWords() {
                 </p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-                {essentialWords[selectedCategory].words.map((word, index) => (
+                {essentialWords[selectedCategory as keyof typeof essentialWords].words.map((word, index) => (
                   <div 
                     key={index}
                     className="relative border-2 border-gray-200 rounded-lg p-2 sm:p-3 hover:border-blue-300 transition-all duration-200 min-h-[80px] sm:min-h-[90px] flex flex-col justify-center"
@@ -485,7 +485,7 @@ export default function EssentialWords() {
                 </p>
               </div>
               <div className="space-y-3 sm:space-y-4">
-                {essentialWords[selectedCategory].phrases.map((phrase, index) => {
+                {essentialWords[selectedCategory as keyof typeof essentialWords].phrases.map((phrase, index) => {
                   // 分離日文和中文部分
                   const parts = phrase.split(' - ');
                   const japanesePart = parts[0]?.trim() || phrase;
