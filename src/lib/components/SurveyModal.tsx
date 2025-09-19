@@ -26,6 +26,12 @@ interface SurveyData {
   desiredJapanese: string[];
   currentLearningMethods: string[];
   learningProblems: string[];
+  appInterest: string;
+  // 其他選項的詳細說明
+  otherDifficulty: string;
+  otherSituation: string;
+  otherDesired: string;
+  otherLearningMethod: string;
 }
 
 export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigger = false }: SurveyModalProps) {
@@ -42,7 +48,12 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
     situationDifficulties: [],
     desiredJapanese: [],
     currentLearningMethods: [],
-    learningProblems: []
+    learningProblems: [],
+    appInterest: '',
+    otherDifficulty: '',
+    otherSituation: '',
+    otherDesired: '',
+    otherLearningMethod: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,7 +67,49 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
     }));
   };
 
+  const checkIncompleteQuestions = () => {
+    // 檢查第一步
+    if (surveyData.age.trim() === '' || 
+        surveyData.timeInJapan.trim() === '' || 
+        surveyData.identity === '' || 
+        (surveyData.identity === '其他' && surveyData.otherIdentity.trim() === '') ||
+        surveyData.japaneseLevelBefore === '' || 
+        surveyData.japaneseLevelCurrent === '') {
+      return 0;
+    }
+    
+    // 檢查第二步
+    if (surveyData.difficulties.length === 0 || 
+        (surveyData.difficulties.includes('其他') && surveyData.otherDifficulty.trim() === '') ||
+        surveyData.situationDifficulties.length === 0 || 
+        (surveyData.situationDifficulties.includes('其他') && surveyData.otherSituation.trim() === '')) {
+      return 1;
+    }
+    
+    // 檢查第三步
+    if (surveyData.desiredJapanese.length === 0 || 
+        (surveyData.desiredJapanese.includes('其他') && surveyData.otherDesired.trim() === '') ||
+        surveyData.currentLearningMethods.length === 0 || 
+        (surveyData.currentLearningMethods.includes('其他') && surveyData.otherLearningMethod.trim() === '') ||
+        surveyData.learningProblems.length === 0 ||
+        surveyData.appInterest === '') {
+      return 2;
+    }
+    
+    return -1; // 所有問題都已完成
+  };
+
   const handleSubmit = async () => {
+    // 檢查是否有未完成的問題
+    const incompleteStep = checkIncompleteQuestions();
+    
+    if (incompleteStep !== -1) {
+      // 跳轉到未完成的問題
+      setCurrentStep(incompleteStep);
+      alert('請完成所有必填問題後再提交問卷');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const userId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
@@ -102,11 +155,11 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
             <div className="space-y-4">
               <div>
                 <label className="block text-base font-medium text-gray-700 mb-2">
-                  您的年齡範圍是？ <span className="text-red-500">*</span>
+                  請問您的年齡是？ <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="例：25歲"
+                  placeholder="例：25"
                   value={surveyData.age}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, age: e.target.value }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -115,7 +168,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
 
               <div>
                 <label className="block text-base font-medium text-gray-700 mb-2">
-                  您來日本多久了？ <span className="text-red-500">*</span>
+                  請問您來日本多久了？ <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -128,7 +181,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
 
               <div>
                 <label className="block text-base font-medium text-gray-700 mb-2">
-                  您目前的身分？ <span className="text-red-500">*</span>
+                  請問您目前的身分是？ <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-2">
                   {[
@@ -155,13 +208,22 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   ))}
                 </div>
                 {surveyData.identity === '其他' && (
-                  <input
-                    type="text"
-                    placeholder="請說明..."
-                    value={surveyData.otherIdentity}
-                    onChange={(e) => setSurveyData(prev => ({ ...prev, otherIdentity: e.target.value }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-2"
-                  />
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      placeholder="請說明..."
+                      value={surveyData.otherIdentity}
+                      onChange={(e) => setSurveyData(prev => ({ ...prev, otherIdentity: e.target.value }))}
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        surveyData.otherIdentity.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
+                    />
+                    {surveyData.otherIdentity.trim() === '' && (
+                      <p className="text-red-600 text-xs mt-1">
+                        ※ 請填寫具體說明才能繼續
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -206,7 +268,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 </label>
                 <div className="space-y-2">
                   {[
-                    '努力適應五十音，例：看到「こんにちは」需要想一下才知道讀音',
+                    '努力學習五十音，例：看到「こんにちは」需要想一下才知道讀音',
                     '能進行最基本的日語對話，例：會說「ありがとう」「すみません」，能簡單自我介紹',
                     'N5程度／基礎會話，例：能說「コンビニはどこですか」「これはいくらですか」等簡單句子',
                     'N4程度／簡單日常對話，例：能用過去式說「昨日映画を見ました」，會用「...したい」表達想要',
@@ -253,11 +315,8 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 '聽不懂對方在說什麼',
                 '想表達但不知道怎麼說',
                 '語速太快跟不上',
-                '敬語使用不當',
                 '漢字讀音不會',
                 '方言或俗語聽不懂',
-                '不知道什麼場合該說什麼話',
-                '文化差異造成的誤解',
                 '其他'
               ].map(option => (
                 <div key={option} className="flex items-center">
@@ -274,6 +333,24 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 </div>
               ))}
             </div>
+            {surveyData.difficulties.includes('其他') && (
+              <div className="mt-2">
+                <input
+                  type="text"
+                  placeholder="請說明..."
+                  value={surveyData.otherDifficulty}
+                  onChange={(e) => setSurveyData(prev => ({ ...prev, otherDifficulty: e.target.value }))}
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    surveyData.otherDifficulty.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                />
+                {surveyData.otherDifficulty.trim() === '' && (
+                  <p className="text-red-600 text-xs mt-1">
+                    ※ 請填寫具體說明才能繼續
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 第二題：什麼情境下容易有日語使用困擾 */}
@@ -290,8 +367,6 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 '在餐廳點餐',
                 '問路或搭乘交通工具',
                 '與同學、老師的學校對話',
-                '打工面試或職場對話',
-                '應對緊急狀況',
                 '其他'
               ].map(option => (
                 <div key={option} className="flex items-center">
@@ -316,6 +391,24 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
             <p className="text-sm text-blue-600 mt-2">
               已選擇 {surveyData.situationDifficulties.length}/3 項
             </p>
+            {surveyData.situationDifficulties.includes('其他') && (
+              <div className="mt-2">
+                <input
+                  type="text"
+                  placeholder="請說明..."
+                  value={surveyData.otherSituation}
+                  onChange={(e) => setSurveyData(prev => ({ ...prev, otherSituation: e.target.value }))}
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    surveyData.otherSituation.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                />
+                {surveyData.otherSituation.trim() === '' && (
+                  <p className="text-red-600 text-xs mt-1">
+                    ※ 請填寫具體說明才能繼續
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="bg-blue-50 p-4 rounded-lg">
@@ -344,9 +437,6 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 '餐廳點餐用語',
                 '交通工具使用用語',
                 '學校生活用語',
-                '打工相關用語',
-                '社交場合用語',
-                '緊急情況求助用語',
                 '其他'
               ].map(option => (
                 <div key={option} className="flex items-center">
@@ -363,6 +453,24 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 </div>
               ))}
             </div>
+            {surveyData.desiredJapanese.includes('其他') && (
+              <div className="mt-2">
+                <input
+                  type="text"
+                  placeholder="請說明..."
+                  value={surveyData.otherDesired}
+                  onChange={(e) => setSurveyData(prev => ({ ...prev, otherDesired: e.target.value }))}
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    surveyData.otherDesired.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                />
+                {surveyData.otherDesired.trim() === '' && (
+                  <p className="text-red-600 text-xs mt-1">
+                    ※ 請填寫具體說明才能繼續
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 第二題：目前如何學習日語 */}
@@ -396,6 +504,24 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 </div>
               ))}
             </div>
+            {surveyData.currentLearningMethods.includes('其他') && (
+              <div className="mt-2">
+                <input
+                  type="text"
+                  placeholder="請說明..."
+                  value={surveyData.otherLearningMethod}
+                  onChange={(e) => setSurveyData(prev => ({ ...prev, otherLearningMethod: e.target.value }))}
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    surveyData.otherLearningMethod.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                />
+                {surveyData.otherLearningMethod.trim() === '' && (
+                  <p className="text-red-600 text-xs mt-1">
+                    ※ 請填寫具體說明才能繼續
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 第三題：覺得現有學習方式有什麼問題 */}
@@ -419,12 +545,61 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                     id={`problem-${option}`}
                     checked={surveyData.learningProblems.includes(option)}
                     onChange={() => handleCheckboxChange('learningProblems', option)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    disabled={
+                      (option === '沒有明顯問題' && surveyData.learningProblems.some(p => p !== '沒有明顯問題')) ||
+                      (option !== '沒有明顯問題' && surveyData.learningProblems.includes('沒有明顯問題'))
+                    }
+                    className={`w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 ${
+                      ((option === '沒有明顯問題' && surveyData.learningProblems.some(p => p !== '沒有明顯問題')) ||
+                       (option !== '沒有明顯問題' && surveyData.learningProblems.includes('沒有明顯問題'))) 
+                        ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   />
-                  <label htmlFor={`problem-${option}`} className="ml-3 text-sm text-gray-700">
+                  <label 
+                    htmlFor={`problem-${option}`} 
+                    className={`ml-3 text-sm ${
+                      ((option === '沒有明顯問題' && surveyData.learningProblems.some(p => p !== '沒有明顯問題')) ||
+                       (option !== '沒有明顯問題' && surveyData.learningProblems.includes('沒有明顯問題'))) 
+                        ? 'text-gray-400' : 'text-gray-700'
+                    }`}
+                  >
                     {option}
                   </label>
                 </div>
+              ))}
+            </div>
+            {surveyData.learningProblems.includes('沒有明顯問題') && (
+              <p className="text-xs text-amber-600 mt-2">
+                ※ 已選擇「沒有明顯問題」，無法選擇其他選項
+              </p>
+            )}
+          </div>
+
+          {/* 第四題：APP興趣度 */}
+          <div>
+            <label className="block text-base font-medium text-gray-700 mb-4">
+              如果有一個APP可以根據您的日常任務（如購物、辦手續）自動生成相關日語學習內容，您會有興趣嗎？ <span className="text-red-500">*</span>
+            </label>
+            <div className="space-y-2">
+              {[
+                '非常有興趣，立刻想試用',
+                '有興趣，會考慮使用',
+                '可能有興趣，看使用效果',
+                '興趣不大，已有其他學習方式',
+                '完全沒興趣'
+              ].map(option => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setSurveyData(prev => ({ ...prev, appInterest: option }))}
+                  className={`w-full p-2 rounded-lg border-2 text-left transition-colors text-sm ${
+                    surveyData.appInterest === option 
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  {option}
+                </button>
               ))}
             </div>
           </div>
@@ -450,12 +625,20 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
              surveyData.japaneseLevelBefore !== '' && 
              surveyData.japaneseLevelCurrent !== '';
     } else if (currentStep === 1) {
-      return surveyData.difficulties.length > 0 && 
-             surveyData.situationDifficulties.length > 0;
+      const difficultiesValid = surveyData.difficulties.length > 0 && 
+        (!surveyData.difficulties.includes('其他') || surveyData.otherDifficulty.trim() !== '');
+      const situationValid = surveyData.situationDifficulties.length > 0 && 
+        (!surveyData.situationDifficulties.includes('其他') || surveyData.otherSituation.trim() !== '');
+      return difficultiesValid && situationValid;
     } else if (currentStep === 2) {
-      return surveyData.desiredJapanese.length > 0 && 
-             surveyData.currentLearningMethods.length > 0 && 
-             surveyData.learningProblems.length > 0;
+      const desiredValid = surveyData.desiredJapanese.length > 0 && 
+        (!surveyData.desiredJapanese.includes('其他') || surveyData.otherDesired.trim() !== '');
+      const learningMethodValid = surveyData.currentLearningMethods.length > 0 && 
+        (!surveyData.currentLearningMethods.includes('其他') || surveyData.otherLearningMethod.trim() !== '');
+      const learningProblemsValid = surveyData.learningProblems.length > 0;
+      
+      return desiredValid && learningMethodValid && learningProblemsValid &&
+             surveyData.appInterest !== '';
     }
     return false;
   };
@@ -478,7 +661,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
           )}
           <h2 className="text-2xl font-bold text-gray-800">日文學習App事前問卷調查</h2>
           <p className="text-gray-600 mt-3">
-            您好！我們正在開發一款專為在日留學生設計的日語學習App，透過AI技術幫助您快速適應日本生活。您的經驗分享將幫助我們打造真正實用的產品！問卷約需5分鐘，感謝您的參與！
+            您好！我是就讀神戶情報大學院大學二年級的學生，我正在開發一款專為台灣留學生設計的日語學習App，透過AI推薦與您今日待辦事項有關的日文詞彙。您的經驗分享將幫助我完成研究論文！問卷約需3分鐘，感謝您的參與！
           </p>
           <div className="flex items-center mt-4">
             <div className="w-full bg-gray-200 rounded-full h-2">

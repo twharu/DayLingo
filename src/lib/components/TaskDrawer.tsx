@@ -12,6 +12,8 @@ interface TaskDrawerProps {
     selectedCategory: string;
     taskName: string;
     taskDescription: string;
+    reminderEnabled: boolean;
+    reminderMinutesBefore: number;
   }) => void;
   loading?: boolean;
 }
@@ -21,6 +23,8 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
   const [selectedCategory, setSelectedCategory] = useState('');
   const [taskName, setTaskName] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
+  const [reminderEnabled, setReminderEnabled] = useState(true);
+  const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
 
   const categories = [
     '日常生活',
@@ -47,7 +51,9 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
       selectedTime,
       selectedCategory,
       taskName,
-      taskDescription
+      taskDescription,
+      reminderEnabled,
+      reminderMinutesBefore
     });
   };
 
@@ -57,6 +63,8 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
     setSelectedCategory('');
     setTaskName('');
     setTaskDescription('');
+    setReminderEnabled(true);
+    setReminderMinutesBefore(30);
     onClose();
   };
 
@@ -166,7 +174,53 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               </div>
             </div>
 
-            {/* 2. 任務分類標籤 */}
+            {/* 2. 提醒設定 */}
+            <div>
+              <label className="block text-lg font-medium text-gray-700 mb-3">
+                提醒設定
+              </label>
+              <div className="space-y-4">
+                {/* 是否啟用提醒 */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="reminderEnabled"
+                    checked={reminderEnabled}
+                    onChange={(e) => setReminderEnabled(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="reminderEnabled" className="ml-3 text-gray-700">
+                    任務前發送 Email 提醒
+                  </label>
+                </div>
+                
+                {/* 提前提醒時間 */}
+                {reminderEnabled && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      提前提醒時間
+                    </label>
+                    <select
+                      value={reminderMinutesBefore}
+                      onChange={(e) => setReminderMinutesBefore(parseInt(e.target.value))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value={15}>15 分鐘前</option>
+                      <option value={30}>30 分鐘前</option>
+                      <option value={60}>1 小時前</option>
+                      <option value={120}>2 小時前</option>
+                      <option value={360}>6 小時前</option>
+                      <option value={1440}>1 天前</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      將在任務開始前發送提醒 Email
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 3. 任務分類標籤 */}
             <div>
               <label htmlFor="category" className="block text-lg font-medium text-gray-700 mb-3">
                 任務分類 <span className="text-red-500">*</span>

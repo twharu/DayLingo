@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTour } from '@/lib/hooks/useTour';
 
 export default function Settings() {
   const router = useRouter();
+  const { resetTour } = useTour();
   const [settings, setSettings] = useState({
     email: '',
     userName: '',
     dailyReminderEnabled: true,
-    taskReminderEnabled: true,
-    dailyReminderTime: '08:00',
-    reminderMinutesBefore: 30
+    dailyReminderTime: '08:00'
   });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -76,8 +76,8 @@ export default function Settings() {
 
         {/* 標題 */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">⚙️ 設定</h1>
-          <p className="text-gray-600">管理您的 Email 提醒偏好</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">設定</h1>
+          <p className="text-gray-600">管理您的 Email 和每日學習提醒設定</p>
         </div>
 
         {/* 設定表單 */}
@@ -85,7 +85,7 @@ export default function Settings() {
           <div className="space-y-6">
             {/* 基本資訊 */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">📧 基本資訊</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">基本資訊</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -118,7 +118,7 @@ export default function Settings() {
 
             {/* 每日提醒 */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">🌅 每日提醒</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">每日提醒</h3>
               
               <div className="space-y-4">
                 <div className="flex items-center">
@@ -153,46 +153,6 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* 任務提醒 */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">⏰ 任務提醒</h3>
-              
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="taskReminder"
-                    checked={settings.taskReminderEnabled}
-                    onChange={(e) => setSettings({ ...settings, taskReminderEnabled: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="taskReminder" className="ml-2 text-sm text-gray-700">
-                    啟用任務到期提醒
-                  </label>
-                </div>
-                
-                {settings.taskReminderEnabled && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      提前提醒時間
-                    </label>
-                    <select
-                      value={settings.reminderMinutesBefore}
-                      onChange={(e) => setSettings({ ...settings, reminderMinutesBefore: parseInt(e.target.value) })}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value={15}>15 分鐘前</option>
-                      <option value={30}>30 分鐘前</option>
-                      <option value={60}>1 小時前</option>
-                      <option value={120}>2 小時前</option>
-                    </select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      任務到期前多久發送提醒 Email
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* 儲存按鈕 */}
             <div className="flex items-center justify-between pt-6 border-t">
@@ -221,12 +181,26 @@ export default function Settings() {
 
         {/* 說明 */}
         <div className="bg-blue-50 rounded-xl p-4 mt-6">
-          <h4 className="font-semibold text-blue-800 mb-2">📝 使用說明</h4>
+          <h4 className="font-semibold text-blue-800 mb-2">使用說明</h4>
           <ul className="text-sm text-blue-700 space-y-1">
             <li>• 每日提醒：每天固定時間發送學習提醒</li>
-            <li>• 任務提醒：在您設定的任務到期前發送提醒</li>
+            <li>• 任務提醒：可在建立任務時個別設定提醒</li>
             <li>• 點擊「儲存設定」會發送測試 Email 確認功能正常</li>
           </ul>
+        </div>
+
+        {/* 其他功能 */}
+        <div className="bg-gray-50 rounded-xl p-4 mt-6">
+          <h4 className="font-semibold text-gray-800 mb-3">其他功能</h4>
+          <button
+            onClick={resetTour}
+            className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+          >
+            重新觀看網站導覽
+          </button>
+          <p className="text-xs text-gray-500 mt-2">
+            重新體驗首次使用的引導教學
+          </p>
         </div>
       </div>
     </div>

@@ -11,9 +11,11 @@ import PostUsageSurvey from '@/lib/components/PostUsageSurvey';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
 import MiniCalendar from '@/lib/components/MiniCalendar';
 import TaskDrawer from '@/lib/components/TaskDrawer';
+import { useTour } from '@/lib/hooks/useTour';
 
 export default function Home() {
   const router = useRouter();
+  const { checkFirstVisit } = useTour();
   
   // 取得今天的日期並格式化為 YYYY-MM-DD
   const getTodayDate = () => {
@@ -103,11 +105,14 @@ export default function Home() {
         setShowSurvey(true);
       }, 1000);
       return () => clearTimeout(timer);
+    } else {
+      // 如果問卷已完成，直接檢查是否為首次訪問
+      checkFirstVisit();
     }
     
     // 檢查是否需要顯示後問卷
     checkPostSurveyTrigger();
-  }, []);
+  }, [checkFirstVisit]);
 
   // 頁面離開時記錄學習會話
   useEffect(() => {
@@ -508,8 +513,10 @@ export default function Home() {
     selectedCategory: string;
     taskName: string;
     taskDescription: string;
+    reminderEnabled: boolean;
+    reminderMinutesBefore: number;
   }) => {
-    const { selectedDate: date, selectedTime, selectedCategory, taskName, taskDescription } = formData;
+    const { selectedDate: date, selectedTime, selectedCategory, taskName, taskDescription, reminderEnabled, reminderMinutesBefore } = formData;
     
     const fullTask = `
 日期: ${date}
@@ -552,7 +559,9 @@ export default function Home() {
           selectedTime,
           selectedCategory,
           taskName,
-          taskDescription
+          taskDescription,
+          reminderEnabled,
+          reminderMinutesBefore
         };
         localStorage.setItem('formData', JSON.stringify(formDataToSave));
         
@@ -582,9 +591,13 @@ export default function Home() {
         onComplete={() => {
           setShowSurvey(false);
           setShowThankYou(true);
-          // 3秒後自動關閉感謝信息
+          // 3秒後自動關閉感謝信息並啟動導覽
           setTimeout(() => {
             setShowThankYou(false);
+            // 在感謝視窗關閉後啟動網站導覽
+            setTimeout(() => {
+              checkFirstVisit();
+            }, 500);
           }, 3000);
         }}
         onClose={() => {
@@ -612,12 +625,18 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-bold text-gray-800 mb-2">感謝您的參與！</h3>
               <p className="text-gray-600 leading-relaxed">
-                您的寶貴意見將幫助我們打造更符合留學生需求的日語學習工具。<br />
+                您的寶貴意見將幫助我打造更符合留學生需求的日語學習工具。<br />
                 祝您在日本的學習生活順利愉快！
               </p>
             </div>
             <button
-              onClick={() => setShowThankYou(false)}
+              onClick={() => {
+                setShowThankYou(false);
+                // 手動關閉感謝視窗時也啟動網站導覽
+                setTimeout(() => {
+                  checkFirstVisit();
+                }, 500);
+              }}
               className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
               開始學習日語
@@ -631,23 +650,25 @@ export default function Home() {
         <header className="py-8">
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              <h1 id="app-title" className="text-4xl font-bold text-gray-800 mb-2">
                 おはよう！早安！
               </h1>
               <p className="text-gray-600">
                 記錄你的日常任務，AI會生成相關的日文詞彙
               </p>
             </div>
-            <HamburgerMenu 
-              currentPath="/"
-              hasContent={!!content}
-              onClearContent={clearContent}
-            />
+            <div id="hamburger-menu">
+              <HamburgerMenu 
+                currentPath="/"
+                hasContent={!!content}
+                onClearContent={clearContent}
+              />
+            </div>
           </div>
         </header>
 
         {/* 小版日曆 */}
-        <div className="mb-6">
+        <div id="mini-calendar" className="mb-6">
           <MiniCalendar onDateClick={handleDateClick} />
         </div>
 
@@ -655,11 +676,18 @@ export default function Home() {
         {!content && (
           <div className="bg-white rounded-lg shadow-lg p-8 mb-6 text-center">
             <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <button 
+                className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 hover:bg-blue-200 transition-colors cursor-pointer"
+                onClick={() => {
+                  setSelectedDate(getTodayDate());
+                  setIsTaskDrawerOpen(true);
+                }}
+                title="建立新任務"
+              >
                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
-              </div>
+              </button>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 輸入今天的第一個任務吧！
               </h3>
@@ -667,6 +695,7 @@ export default function Home() {
                 點擊下方按鈕或日曆上的日期來創建你的第一個學習任務
               </p>
               <button
+                id="create-task-button"
                 onClick={() => {
                   setSelectedDate(getTodayDate());
                   setIsTaskDrawerOpen(true);

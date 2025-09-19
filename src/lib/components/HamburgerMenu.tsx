@@ -113,6 +113,7 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
               </Link>
               
               <Link 
+                id="settings-link"
                 href="/settings"
                 className="block p-4 rounded-lg transition-all duration-200 hover:bg-gray-50 relative group"
                 onClick={() => setIsMenuOpen(false)}
@@ -120,7 +121,7 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
                 <div className="absolute inset-0 bg-gray-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
                 <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                 <div className="relative">
-                  <h3 className="font-medium text-gray-800">⚙️ 設定</h3>
+                  <h3 className="font-medium text-gray-800">設定</h3>
                   <p className="text-sm text-gray-500">Email 提醒設定</p>
                 </div>
               </Link>
