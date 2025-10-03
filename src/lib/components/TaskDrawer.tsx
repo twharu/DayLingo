@@ -27,16 +27,11 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
   const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
 
   const categories = [
-    '日常生活',
-    '購物消費',
-    '餐廳用餐',
-    '交通出行',
-    '學校生活',
-    '醫療健康',
-    '銀行郵局',
-    '工作相關',
-    '社交活動',
-    '緊急情況'
+    '日常',
+    '購物',
+    '學校',
+    '文件申辦',
+    '工作'
   ];
 
   const handleSubmit = (e: React.FormEvent) => {

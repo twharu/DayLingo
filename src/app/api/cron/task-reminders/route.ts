@@ -9,12 +9,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const now = new Date();
-    const thirtyMinutesLater = new Date(now.getTime() + 30 * 60 * 1000);
-
     // TODO: 從資料庫獲取即將到期的任務
     // 目前使用示範資料
-    const upcomingTasks = [
+    const upcomingTasks: Array<{
+      userEmail: string;
+      userName: string;
+      taskName: string;
+      deadline: string;
+      reminderSent: boolean;
+    }> = [
       // {
       //   userEmail: 'user@example.com',
       //   userName: '測試用戶',

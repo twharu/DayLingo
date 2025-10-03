@@ -24,16 +24,11 @@ export default function VocabularyPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const categories = [
-    '日常生活',
-    '購物消費',
-    '餐廳用餐',
-    '交通出行',
-    '學校生活',
-    '醫療健康',
-    '銀行郵局',
-    '工作相關',
-    '社交活動',
-    '緊急情況'
+    '日常',
+    '購物',
+    '學校',
+    '文件申辦',
+    '工作'
   ];
 
   useEffect(() => {
@@ -334,9 +329,13 @@ export default function VocabularyPage() {
                             {word.category}
                           </span>
                         )}
-                        <h3 className="text-xl font-bold text-gray-800">
-                          {word.word} - {word.meaning}
+                      </div>
+
+                      <div className="mb-3">
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                          {word.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
                         </h3>
+                        <p className="text-gray-600">{word.meaning}</p>
                       </div>
                       
                       <div className="mb-3">

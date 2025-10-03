@@ -128,13 +128,14 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
         localStorage.setItem('userId', userId);
       }
       
+      setIsSubmitting(false); // 在調用 onComplete 前先重置狀態
       onComplete();
       // 問卷完成後不跳轉，留在當前頁面
     } catch (error) {
       console.error('提交問卷失敗:', error);
       alert('提交失敗，請重試');
+      setIsSubmitting(false); // 發生錯誤時也要重置狀態
     }
-    setIsSubmitting(false);
   };
 
   const handleClose = () => {

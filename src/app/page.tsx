@@ -1,20 +1,20 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import SurveyModal from '@/lib/components/SurveyModal';
 import PostUsageSurvey from '@/lib/components/PostUsageSurvey';
+import UserRegistration from '@/lib/components/UserRegistration';
+import DeveloperTestPanel from '@/lib/components/DeveloperTestPanel';
+import FirebaseStatus from '@/lib/components/FirebaseStatus';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
 import MiniCalendar from '@/lib/components/MiniCalendar';
 import TaskDrawer from '@/lib/components/TaskDrawer';
 import { useTour } from '@/lib/hooks/useTour';
 
 export default function Home() {
-  const router = useRouter();
   const { checkFirstVisit } = useTour();
   
   // 取得今天的日期並格式化為 YYYY-MM-DD
@@ -29,15 +29,17 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
   const [selectedCategory, setSelectedCategory] = useState('');
   const [taskName, setTaskName] = useState('');
-  const [taskDescription, setTaskDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState<{content: string} | null>(null);
   const [parsedWords, setParsedWords] = useState<{word: string, reading: string, meaning: string, example: string, exampleTranslation: string}[]>([]);
   const [savingWords, setSavingWords] = useState<Set<number>>(new Set());
   const [savedWords, setSavedWords] = useState<Set<number>>(new Set());
   const contentRef = useRef<HTMLDivElement>(null);
+  const sessionRecorded = useRef<boolean>(false);
   const [showSurvey, setShowSurvey] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [showUserRegistration, setShowUserRegistration] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [voiceUsageCount, setVoiceUsageCount] = useState(0);
@@ -46,6 +48,9 @@ export default function Home() {
   const [currentTaskTime, setCurrentTaskTime] = useState<string | null>(null);
 
   useEffect(() => {
+    // 檢查是否在瀏覽器環境
+    if (typeof window === 'undefined') return;
+    
     // 檢查是否為頁面重新整理 - 如果是，清空關聯詞彙
     const navigation = (window as Window & { performance: Performance }).performance?.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming;
     if (navigation?.type === 'reload') {
@@ -60,6 +65,12 @@ export default function Home() {
       localStorage.removeItem('generatedContent');
       localStorage.removeItem('formData');
       return;
+    }
+    
+    // 檢查用戶 ID
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      setUserId(storedUserId);
     }
     
     // 從 localStorage 載入保存的內容
@@ -82,7 +93,6 @@ export default function Home() {
         setSelectedDate(parsedFormData.selectedDate || getTodayDate());
         setSelectedCategory(parsedFormData.selectedCategory || '');
         setTaskName(parsedFormData.taskName || '');
-        setTaskDescription(parsedFormData.taskDescription || '');
         setCurrentTaskTime(parsedFormData.selectedTime || null);
       } catch (error) {
         console.error('載入保存的表單資料失敗:', error);
@@ -90,32 +100,111 @@ export default function Home() {
     }
     
     // 預載語音庫
-    if ('speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.getVoices();
       window.speechSynthesis.onvoiceschanged = () => {
         window.speechSynthesis.getVoices();
       };
     }
     
-    // 檢查是否需要顯示問卷
-    const surveyCompleted = localStorage.getItem('surveyCompleted');
-    if (!surveyCompleted) {
-      // 延遲1秒後顯示問卷彈窗
-      const timer = setTimeout(() => {
-        setShowSurvey(true);
-      }, 1000);
-      return () => clearTimeout(timer);
+    // 檢查流程：用戶註冊 -> 問卷 -> 導覽
+    if (!storedUserId) {
+      // 沒有用戶ID，顯示註冊介面
+      setShowUserRegistration(true);
     } else {
-      // 如果問卷已完成，直接檢查是否為首次訪問
-      checkFirstVisit();
+      // 有用戶ID，檢查問卷狀態
+      const surveyCompleted = localStorage.getItem('surveyCompleted');
+      if (!surveyCompleted) {
+        // 延遲1秒後顯示問卷彈窗
+        const timer = setTimeout(() => {
+          setShowSurvey(true);
+        }, 1000);
+        return () => clearTimeout(timer);
+      } else {
+        // 問卷已完成，檢查導覽
+        checkFirstVisit();
+      }
     }
+  }, []); // 移除 checkFirstVisit 依賴，避免無限循環
+
+  // 獨立的後問卷檢查 useEffect - 加入更嚴格的控制
+  useEffect(() => {
+    if (!userId || showPostSurvey) return; // 如果已經顯示問卷，直接返回
     
-    // 檢查是否需要顯示後問卷
-    checkPostSurveyTrigger();
-  }, [checkFirstVisit]);
+    // 額外檢查：如果已經觸發過就不要再檢查了
+    const alreadyTriggered = localStorage.getItem(`postSurveyTriggered_${userId}`);
+    if (alreadyTriggered) return;
+    
+    const checkPostSurvey = async () => {
+      const postSurveyCompleted = localStorage.getItem('postSurveyCompleted');
+      const surveyCompleted = localStorage.getItem('surveyCompleted');
+      
+      // 如果後問卷已完成，或事前問卷未完成，直接返回
+      if (postSurveyCompleted || !surveyCompleted) return;
+      
+      // 檢查是否已經檢查過使用次數
+      const lastCheckTime = localStorage.getItem(`lastUsageCheck_${userId}`);
+      const now = Date.now();
+      
+      // 如果 5 分鐘內已檢查過，跳過
+      if (lastCheckTime && (now - parseInt(lastCheckTime)) < 5 * 60 * 1000) {
+        return;
+      }
+      
+      try {
+        // 先檢查本地緩存的使用次數
+        const cachedCount = localStorage.getItem(`usageCount_${userId}`);
+        
+        if (cachedCount && parseInt(cachedCount) >= 5) {
+          // 防止重複觸發
+          localStorage.setItem(`postSurveyTriggered_${userId}`, 'true');
+          setTimeout(() => {
+            setShowPostSurvey(true);
+          }, 2000);
+          return;
+        }
+        
+        // 如果緩存不存在或小於5，才查詢 Firebase
+        const q = query(collection(db, 'learningSessions'), where('userId', '==', userId));
+        const querySnapshot = await getDocs(q);
+        const usageCount = querySnapshot.size;
+        
+        // 緩存查詢結果
+        localStorage.setItem(`usageCount_${userId}`, usageCount.toString());
+        localStorage.setItem(`lastUsageCheck_${userId}`, now.toString());
+        
+        console.log(`用戶 ${userId} 使用次數: ${usageCount}`);
+        
+        if (usageCount >= 5) {
+          // 防止重複觸發
+          localStorage.setItem(`postSurveyTriggered_${userId}`, 'true');
+          setTimeout(() => {
+            setShowPostSurvey(true);
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('檢查使用次數失敗:', error);
+        // 如果是配額錯誤，使用本地計數
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'resource-exhausted') {
+          const localCount = parseInt(localStorage.getItem('localUsageCount') || '0');
+          if (localCount >= 5) {
+            localStorage.setItem(`postSurveyTriggered_${userId}`, 'true');
+            setTimeout(() => {
+              setShowPostSurvey(true);
+            }, 2000);
+          }
+        }
+      }
+    };
+    
+    // 執行檢查
+    checkPostSurvey();
+  }, [userId]); // 移除 showPostSurvey 依賴，避免無限循環
 
   // 頁面離開時記錄學習會話
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleBeforeUnload = () => {
       if (sessionStartTime && content) {
         recordLearningSession();
@@ -125,26 +214,10 @@ export default function Home() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      // 組件卸載時也記錄
-      if (sessionStartTime && content) {
-        recordLearningSession();
-      }
     };
-  }, [sessionStartTime, content, selectedCategory, taskName, parsedWords.length, savedWords.size, voiceUsageCount]);
+  }, []); // 移除依賴，只在組件掛載時註冊一次
 
-  const categories = [
-    '日常生活',
-    '購物消費',
-    '餐廳用餐',
-    '交通出行',
-    '學校生活',
-    '醫療健康',
-    '銀行郵局',
-    '工作相關',
-    '社交活動',
-    '緊急情況'
-  ];
-
+  // 移除有問題的組件卸載 useEffect,依賴 beforeunload 事件處理
 
   const parseWords = (content: string) => {
     const words = [];
@@ -171,19 +244,18 @@ export default function Home() {
         
         if (wordMatch) {
           const [, wordWithRuby, meaning] = wordMatch;
-          
+
           // 提取ruby標記中的單字和讀音，並構建完整讀音
           const rubyPattern = /<ruby>([^<]+)<rt>([^<]+)<\/rt><\/ruby>/g;
           let word = wordWithRuby;
           let reading = '';
-          
+
           // 構建完整的讀音，包含平假名和漢字讀音
           let tempText = wordWithRuby;
           let match;
-          
+
           // 將所有 ruby 標記替換為對應的讀音
           while ((match = rubyPattern.exec(wordWithRuby)) !== null) {
-            const kanjiPart = match[1];
             const readingPart = match[2];
             tempText = tempText.replace(match[0], readingPart);
           }
@@ -346,63 +418,85 @@ export default function Home() {
     return processedText;
   };
 
-  // 生成匿名用戶ID
-  const getAnonymousUserId = () => {
-    let userId = localStorage.getItem('anonymousUserId');
-    if (!userId) {
-      userId = 'user_' + btoa(
-        navigator.userAgent.slice(0, 50) + 
-        Date.now().toString() + 
-        Math.random().toString()
-      ).slice(0, 16);
-      localStorage.setItem('anonymousUserId', userId);
-    }
-    return userId;
-  };
+  // 更新參與者使用次數 - 加入本地備援機制
+  const incrementParticipantUsage = async () => {
+    if (!userId) return;
+    
+    // 先更新本地計數
+    const currentLocalCount = parseInt(localStorage.getItem('localUsageCount') || '0');
+    const newLocalCount = currentLocalCount + 1;
+    localStorage.setItem('localUsageCount', newLocalCount.toString());
+    
+    // 更新本地緩存
+    localStorage.setItem(`usageCount_${userId}`, newLocalCount.toString());
+    
+    try {
+      const q = query(collection(db, 'users'), where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const currentData = userDoc.data();
+        const newUsageCount = (currentData.usageCount || 0) + 1;
+        
+        await updateDoc(doc(db, 'users', userDoc.id), {
+          usageCount: newUsageCount,
+          lastUsed: new Date().toISOString()
+        });
+        
+        console.log(`參與者 ${userId} 使用次數更新為: ${newUsageCount}`);
+        
+        // 檢查是否需要顯示後問卷
+        if (newUsageCount >= 5 && !localStorage.getItem('postSurveyCompleted')) {
+          setTimeout(() => {
+            setShowPostSurvey(true);
+          }, 3000);
+        }
+      }
+    } catch (error) {
+      console.error('更新參與者使用次數失敗:', error);
 
-  // 檢查是否需要觸發後問卷
-  const checkPostSurveyTrigger = () => {
-    const postSurveyCompleted = localStorage.getItem('postSurveyCompleted');
-    const usageCount = parseInt(localStorage.getItem('appUsageCount') || '0');
-    
-    // 如果後問卷已完成，不再顯示
-    if (postSurveyCompleted) return;
-    
-    // 如果使用次數達到2次或以上，顯示後問卷
-    if (usageCount >= 2) {
-      const timer = setTimeout(() => {
-        setShowPostSurvey(true);
-      }, 2000); // 延遲2秒顯示，讓用戶先看到內容
-      return () => clearTimeout(timer);
-    }
-  };
-
-  // 記錄app使用次數
-  const incrementUsageCount = () => {
-    const currentCount = parseInt(localStorage.getItem('appUsageCount') || '0');
-    const newCount = currentCount + 1;
-    localStorage.setItem('appUsageCount', newCount.toString());
-    console.log('App使用次數:', newCount);
-    
-    // 檢查是否需要顯示後問卷
-    if (newCount >= 2 && !localStorage.getItem('postSurveyCompleted')) {
-      setTimeout(() => {
-        setShowPostSurvey(true);
-      }, 3000); // 3秒後顯示後問卷
+      // 如果 Firebase 失敗，使用本地計數檢查後問卷
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'resource-exhausted') {
+        console.log('使用本地計數機制');
+        if (newLocalCount >= 5 && !localStorage.getItem('postSurveyCompleted')) {
+          setTimeout(() => {
+            setShowPostSurvey(true);
+          }, 3000);
+        }
+      }
     }
   };
 
   // 記錄學習會話
   const recordLearningSession = async () => {
-    if (!sessionStartTime || !content) return;
+    if (!sessionStartTime || !content || !userId) return;
+    
+    // 防止重複記錄 - 使用 ref 檢查
+    if (sessionRecorded.current) {
+      console.log('會話已記錄過，跳過重複記錄');
+      return;
+    }
+    
+    // 雙重檢查 - localStorage 防護
+    const sessionKey = `session_${sessionStartTime.getTime()}_${userId}`;
+    if (localStorage.getItem(sessionKey)) {
+      console.log('會話已在 localStorage 中記錄過，跳過重複記錄');
+      sessionRecorded.current = true;
+      return;
+    }
+    
+    // 確保學習時間超過10秒才記錄（避免意外觸發）
+    const now = new Date();
+    const studyTimeSeconds = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
+    if (studyTimeSeconds < 10) {
+      console.log('學習時間過短，不記錄會話');
+      return;
+    }
     
     try {
-      const userId = getAnonymousUserId();
-      const now = new Date();
-      const studyTimeSeconds = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
-      
       const sessionData = {
-        userId,
+        userId: userId,
         date: now.toISOString().split('T')[0], // YYYY-MM-DD
         time: currentTaskTime || '09:00', // 任務時間
         category: selectedCategory,
@@ -416,6 +510,11 @@ export default function Home() {
       };
       
       await addDoc(collection(db, 'learningSessions'), sessionData);
+      
+      // 標記這個會話已記錄
+      localStorage.setItem(sessionKey, 'true');
+      sessionRecorded.current = true;
+      
       console.log('學習會話已記錄:', sessionData);
     } catch (error) {
       console.error('記錄學習會話失敗:', error);
@@ -423,7 +522,7 @@ export default function Home() {
   };
 
   const playSound = (text: string) => {
-    if ('speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       // 計數語音使用
       setVoiceUsageCount(prev => prev + 1);
       
@@ -481,12 +580,12 @@ export default function Home() {
     setSavedWords(new Set());
     setSelectedWordIndex(null);
     setSessionStartTime(null);
+    sessionRecorded.current = false; // 重置記錄標記
     setCurrentTaskTime(null);
     setVoiceUsageCount(0);
     setSelectedDate(getTodayDate());
     setSelectedCategory('');
     setTaskName('');
-    setTaskDescription('');
     localStorage.removeItem('generatedContent');
     localStorage.removeItem('formData');
   };
@@ -543,12 +642,13 @@ export default function Home() {
         
         // 開始學習會話時間記錄
         setSessionStartTime(new Date());
+        sessionRecorded.current = false; // 重置記錄標記
         setCurrentTaskTime(selectedTime);
         setVoiceUsageCount(0);
         setSavedWords(new Set());
         
         // 增加使用次數
-        incrementUsageCount();
+        incrementParticipantUsage();
         
         // 儲存生成的內容到 localStorage
         localStorage.setItem('generatedContent', JSON.stringify(data));
@@ -578,14 +678,39 @@ export default function Home() {
       } else {
         alert('生成內容時發生錯誤');
       }
-    } catch (error) {
+    } catch {
       alert('發生錯誤，請稍後再試');
     }
     setLoading(false);
   };
 
+  const handleUserRegistrationComplete = (newUserId: string) => {
+    setUserId(newUserId);
+    setShowUserRegistration(false);
+    
+    // 用戶註冊完成後，檢查問卷狀態
+    const surveyCompleted = localStorage.getItem('surveyCompleted');
+    if (!surveyCompleted) {
+      setTimeout(() => {
+        setShowSurvey(true);
+      }, 1000);
+    } else {
+      checkFirstVisit();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+      {/* Firebase 狀態指示器 */}
+      <FirebaseStatus />
+      
+      {/* 用戶註冊模態框 */}
+      <UserRegistration
+        isOpen={showUserRegistration}
+        onComplete={handleUserRegistrationComplete}
+        onClose={() => setShowUserRegistration(false)}
+      />
+      
       <SurveyModal
         isOpen={showSurvey}
         onComplete={() => {
@@ -606,10 +731,14 @@ export default function Home() {
       />
 
       {/* 後問卷 */}
-      {showPostSurvey && (
+      {showPostSurvey && userId && (
         <PostUsageSurvey
-          userId={getAnonymousUserId()}
-          onClose={() => setShowPostSurvey(false)}
+          userId={userId}
+          onClose={() => {
+            setShowPostSurvey(false);
+            // 清理觸發標記，但保持完成標記
+            localStorage.setItem(`postSurveyTriggered_${userId}`, 'true');
+          }}
         />
       )}
 
@@ -909,6 +1038,18 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* 開發者測試面板 - 只在開發環境顯示 */}
+      {process.env.NODE_ENV === 'development' && (
+        <DeveloperTestPanel
+          userId={userId}
+          onTriggerPostSurvey={() => setShowPostSurvey(true)}
+          onResetAll={() => {
+            setUserId(null);
+            setShowUserRegistration(true);
+          }}
+        />
+      )}
     </div>
   );
 }

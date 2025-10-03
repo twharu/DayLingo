@@ -154,12 +154,13 @@ export default function PostUsageSurvey({ onClose, userId }: PostUsageSurveyProp
       });
       
       localStorage.setItem('postSurveyCompleted', 'true');
+      setIsSubmitting(false); // 在關閉前先重置狀態
       onClose();
     } catch (error) {
       console.error('提交問卷失敗:', error);
       alert('提交失敗，請稍後再試');
+      setIsSubmitting(false); // 發生錯誤時也要重置狀態
     }
-    setIsSubmitting(false);
   };
 
   const currentQuestion = questions[currentStep];

@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     // TODO: 從資料庫獲取所有啟用提醒的用戶
     // 目前使用示範資料
-    const usersWithReminders = [
+    const usersWithReminders: Array<{ email: string; name: string; reminderEnabled: boolean }> = [
       // { email: 'user@example.com', name: '測試用戶', reminderEnabled: true }
     ];
 

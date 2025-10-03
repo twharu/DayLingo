@@ -87,9 +87,9 @@ export async function sendTaskDeadlineReminder(
           <p>現在就開始完成這個任務吧！</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://jp-twharu.vercel.app/calendar" 
+            <a href="https://jp-twharu.vercel.app/" 
                style="background: #DC2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-              查看任務詳情 →
+              開始學習 →
             </a>
           </div>
           
