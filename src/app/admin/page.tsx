@@ -18,15 +18,8 @@ interface LearningSession {
   id: string;
   userId: string;
   date: string;
-  time: string;
-  category: string;
-  taskName: string;
   wordsGenerated: number;
   wordsSaved: number;
-  studyTimeSeconds: number;
-  voiceUsageCount: number;
-  contentGeneratedAt: string;
-  sessionEndAt: string;
 }
 
 export default function AdminPage() {
@@ -149,26 +142,17 @@ export default function AdminPage() {
 
   const convertSessionToCSV = (data: LearningSession[]): string => {
     const headers = [
-      'ID', 'UserID', 'Date', 'Time', 'Category', 'TaskName', 
-      'WordsGenerated', 'WordsSaved', 'StudyTimeSeconds', 'VoiceUsageCount',
-      'ContentGeneratedAt', 'SessionEndAt'
+      'ID', 'UserID', 'Date', 'WordsGenerated', 'WordsSaved'
     ];
-    
+
     const rows = data.map(item => [
       item.id,
       item.userId,
       item.date,
-      item.time,
-      item.category,
-      item.taskName,
       item.wordsGenerated.toString(),
-      item.wordsSaved.toString(),
-      item.studyTimeSeconds.toString(),
-      item.voiceUsageCount.toString(),
-      item.contentGeneratedAt,
-      item.sessionEndAt
+      item.wordsSaved.toString()
     ]);
-    
+
     return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
   };
 

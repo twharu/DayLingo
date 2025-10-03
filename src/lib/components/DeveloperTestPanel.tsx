@@ -47,17 +47,10 @@ export default function DeveloperTestPanel({ userId, onTriggerPostSurvey, onRese
         const sessionData = {
           userId: userId,
           date: now.toISOString().split('T')[0],
-          time: '10:00',
-          category: '測試分類',
-          taskName: `測試任務 ${i + 1}`,
-          wordsGenerated: 5,
-          wordsSaved: 2,
-          studyTimeSeconds: 120,
-          voiceUsageCount: 3,
-          contentGeneratedAt: new Date(now.getTime() - (i * 1000)).toISOString(),
-          sessionEndAt: now.toISOString()
+          wordsGenerated: 10,
+          wordsSaved: 3
         };
-        
+
         promises.push(addDoc(collection(db, 'learningSessions'), sessionData));
       }
 
@@ -115,46 +108,7 @@ export default function DeveloperTestPanel({ userId, onTriggerPostSurvey, onRese
   };
 
   const cleanTestData = async () => {
-    if (!confirm('確定要清理測試資料嗎？這將刪除所有包含「測試」字樣的學習會話記錄。')) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // 查詢所有包含測試字樣的記錄
-      const q = query(collection(db, 'learningSessions'));
-      const querySnapshot = await getDocs(q);
-
-      const deletePromises: Promise<void>[] = [];
-      let deleteCount = 0;
-      
-      querySnapshot.forEach((docSnapshot) => {
-        const data = docSnapshot.data();
-        // 檢查是否為測試資料
-        if (data.taskName && (
-          data.taskName.includes('測試') || 
-          data.taskName.includes('test') || 
-          data.taskName.includes('Test') ||
-          data.category === '測試分類'
-        )) {
-          deletePromises.push(deleteDoc(docSnapshot.ref));
-          deleteCount++;
-        }
-      });
-      
-      if (deleteCount === 0) {
-        alert('沒有找到測試資料需要清理。');
-        return;
-      }
-      
-      await Promise.all(deletePromises);
-      alert(`成功清理 ${deleteCount} 筆測試資料！`);
-      
-    } catch (error) {
-      console.error('清理測試資料失敗:', error);
-      alert('清理失敗，請檢查 Firebase 連線。');
-    }
-    setLoading(false);
+    alert('此功能已停用：由於學習會話不再儲存任務資訊，無法區分測試資料和正式資料。請使用「清理重複記錄」功能來清理異常資料。');
   };
 
   const cleanDuplicateRecords = async () => {

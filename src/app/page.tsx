@@ -51,52 +51,10 @@ export default function Home() {
     // 檢查是否在瀏覽器環境
     if (typeof window === 'undefined') return;
     
-    // 檢查是否為頁面重新整理 - 如果是，清空關聯詞彙
-    const navigation = (window as Window & { performance: Performance }).performance?.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming;
-    if (navigation?.type === 'reload') {
-      // 清空關聯詞彙相關的狀態和localStorage
-      setContent(null);
-      setParsedWords([]);
-      setSavedWords(new Set());
-      setSelectedWordIndex(null);
-      setSessionStartTime(null);
-      setCurrentTaskTime(null);
-      setVoiceUsageCount(0);
-      localStorage.removeItem('generatedContent');
-      localStorage.removeItem('formData');
-      return;
-    }
-    
     // 檢查用戶 ID
     const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
       setUserId(storedUserId);
-    }
-    
-    // 從 localStorage 載入保存的內容
-    const savedContent = localStorage.getItem('generatedContent');
-    const savedFormData = localStorage.getItem('formData');
-    
-    if (savedContent) {
-      try {
-        const parsedContent = JSON.parse(savedContent);
-        setContent(parsedContent);
-        parseWords(parsedContent.content);
-      } catch (error) {
-        console.error('載入保存的內容失敗:', error);
-      }
-    }
-    
-    if (savedFormData) {
-      try {
-        const parsedFormData = JSON.parse(savedFormData);
-        setSelectedDate(parsedFormData.selectedDate || getTodayDate());
-        setSelectedCategory(parsedFormData.selectedCategory || '');
-        setTaskName(parsedFormData.taskName || '');
-        setCurrentTaskTime(parsedFormData.selectedTime || null);
-      } catch (error) {
-        console.error('載入保存的表單資料失敗:', error);
-      }
     }
     
     // 預載語音庫
@@ -201,23 +159,7 @@ export default function Home() {
     checkPostSurvey();
   }, [userId]); // 移除 showPostSurvey 依賴，避免無限循環
 
-  // 頁面離開時記錄學習會話
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    const handleBeforeUnload = () => {
-      if (sessionStartTime && content) {
-        recordLearningSession();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []); // 移除依賴，只在組件掛載時註冊一次
-
-  // 移除有問題的組件卸載 useEffect,依賴 beforeunload 事件處理
+  // 移除 beforeunload 處理器，改為在保存單字時記錄會話（更可靠）
 
   const parseWords = (content: string) => {
     const words = [];
@@ -245,29 +187,16 @@ export default function Home() {
         if (wordMatch) {
           const [, wordWithRuby, meaning] = wordMatch;
 
-          // 提取ruby標記中的單字和讀音，並構建完整讀音
-          const rubyPattern = /<ruby>([^<]+)<rt>([^<]+)<\/rt><\/ruby>/g;
-          let word = wordWithRuby;
-          let reading = '';
+          // 提取 ruby 標記中的單字和讀音
+          // 讀音：將所有 <ruby>漢字<rt>讀音</rt></ruby> 替換為「讀音」
+          let reading = wordWithRuby.replace(/<ruby>([^<]+)<rt>([^<]+)<\/rt><\/ruby>/g, '$2');
+          // 清理可能遺留的 HTML 標籤
+          reading = reading.replace(/<[^>]*>/g, '');
 
-          // 構建完整的讀音，包含平假名和漢字讀音
-          let tempText = wordWithRuby;
-          let match;
-
-          // 將所有 ruby 標記替換為對應的讀音
-          while ((match = rubyPattern.exec(wordWithRuby)) !== null) {
-            const readingPart = match[2];
-            tempText = tempText.replace(match[0], readingPart);
-          }
-          
-          // 重置 regex 的 lastIndex
-          rubyPattern.lastIndex = 0;
-          
-          reading = tempText;
-          
-          // 移除ruby標記，只保留漢字和平假名
-          word = wordWithRuby.replace(/<ruby>([^<]+)<rt>[^<]+<\/rt><\/ruby>/g, '$1');
-          // 不要強制添加する，保持原始形式
+          // 單字：將所有 <ruby>漢字<rt>讀音</rt></ruby> 替換為「漢字」
+          let word = wordWithRuby.replace(/<ruby>([^<]+)<rt>[^<]+<\/rt><\/ruby>/g, '$1');
+          // 清理可能遺留的 HTML 標籤
+          word = word.replace(/<[^>]*>/g, '');
           
           // 找例句
           let example = '';
@@ -327,7 +256,7 @@ export default function Home() {
     if (!word) return;
 
     setSavingWords(prev => new Set(prev).add(wordIndex));
-    
+
     try {
       await addDoc(collection(db, 'savedWords'), {
         word: word.word,
@@ -338,13 +267,13 @@ export default function Home() {
         category: selectedCategory,
         savedAt: new Date().toISOString()
       });
-      
+
       setSavedWords(prev => new Set(prev).add(wordIndex));
     } catch (error) {
       console.error('儲存單字失敗:', error);
       alert('儲存失敗，請稍後再試');
     }
-    
+
     setSavingWords(prev => {
       const newSet = new Set(prev);
       newSet.delete(wordIndex);
@@ -471,13 +400,13 @@ export default function Home() {
   // 記錄學習會話
   const recordLearningSession = async () => {
     if (!sessionStartTime || !content || !userId) return;
-    
+
     // 防止重複記錄 - 使用 ref 檢查
     if (sessionRecorded.current) {
       console.log('會話已記錄過，跳過重複記錄');
       return;
     }
-    
+
     // 雙重檢查 - localStorage 防護
     const sessionKey = `session_${sessionStartTime.getTime()}_${userId}`;
     if (localStorage.getItem(sessionKey)) {
@@ -485,36 +414,22 @@ export default function Home() {
       sessionRecorded.current = true;
       return;
     }
-    
-    // 確保學習時間超過10秒才記錄（避免意外觸發）
-    const now = new Date();
-    const studyTimeSeconds = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
-    if (studyTimeSeconds < 10) {
-      console.log('學習時間過短，不記錄會話');
-      return;
-    }
-    
+
     try {
+      const now = new Date();
       const sessionData = {
         userId: userId,
         date: now.toISOString().split('T')[0], // YYYY-MM-DD
-        time: currentTaskTime || '09:00', // 任務時間
-        category: selectedCategory,
-        taskName: taskName,
         wordsGenerated: parsedWords.length,
-        wordsSaved: savedWords.size,
-        studyTimeSeconds,
-        voiceUsageCount,
-        contentGeneratedAt: sessionStartTime.toISOString(),
-        sessionEndAt: now.toISOString()
+        wordsSaved: savedWords.size
       };
-      
+
       await addDoc(collection(db, 'learningSessions'), sessionData);
-      
+
       // 標記這個會話已記錄
       localStorage.setItem(sessionKey, 'true');
       sessionRecorded.current = true;
-      
+
       console.log('學習會話已記錄:', sessionData);
     } catch (error) {
       console.error('記錄學習會話失敗:', error);
@@ -574,7 +489,7 @@ export default function Home() {
   const clearContent = async () => {
     // 記錄學習會話（如果有進行中的會話）
     await recordLearningSession();
-    
+
     setContent(null);
     setParsedWords([]);
     setSavedWords(new Set());
@@ -586,8 +501,6 @@ export default function Home() {
     setSelectedDate(getTodayDate());
     setSelectedCategory('');
     setTaskName('');
-    localStorage.removeItem('generatedContent');
-    localStorage.removeItem('formData');
   };
 
   // 處理日曆日期點擊
@@ -615,15 +528,20 @@ export default function Home() {
     reminderEnabled: boolean;
     reminderMinutesBefore: number;
   }) => {
-    const { selectedDate: date, selectedTime, selectedCategory, taskName, taskDescription, reminderEnabled, reminderMinutesBefore } = formData;
-    
+    const { selectedDate: date, selectedTime, selectedCategory: category, taskName: name, taskDescription, reminderEnabled, reminderMinutesBefore } = formData;
+
     const fullTask = `
 日期: ${date}
 時間: ${selectedTime}
-分類: ${selectedCategory}
-任務名稱: ${taskName}
+分類: ${category}
+任務名稱: ${name}
 詳細描述: ${taskDescription}
     `.trim();
+
+    // 先記錄舊的會話（如果存在）
+    if (sessionStartTime && content && !sessionRecorded.current) {
+      await recordLearningSession();
+    }
 
     setLoading(true);
     try {
@@ -639,32 +557,21 @@ export default function Home() {
         const data = await response.json();
         setContent(data);
         parseWords(data.content);
-        
+
+        // 更新任務相關狀態
+        setSelectedCategory(category); // 更新分類，用於保存單字時記錄
+        setTaskName(name); // 更新任務名稱
+
         // 開始學習會話時間記錄
         setSessionStartTime(new Date());
         sessionRecorded.current = false; // 重置記錄標記
         setCurrentTaskTime(selectedTime);
         setVoiceUsageCount(0);
         setSavedWords(new Set());
-        
+
         // 增加使用次數
         incrementParticipantUsage();
-        
-        // 儲存生成的內容到 localStorage
-        localStorage.setItem('generatedContent', JSON.stringify(data));
-        
-        // 儲存表單資料到 localStorage
-        const formDataToSave = {
-          selectedDate: date,
-          selectedTime,
-          selectedCategory,
-          taskName,
-          taskDescription,
-          reminderEnabled,
-          reminderMinutesBefore
-        };
-        localStorage.setItem('formData', JSON.stringify(formDataToSave));
-        
+
         // 關閉抽屜
         setIsTaskDrawerOpen(false);
         
