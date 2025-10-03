@@ -45,28 +45,20 @@ export default function StatisticsPage() {
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 生成匿名用戶ID（基於瀏覽器指紋）
-  const getAnonymousUserId = () => {
-    let userId = localStorage.getItem('anonymousUserId');
-    if (!userId) {
-      // 基於瀏覽器和時間戳生成匿名ID
-      userId = 'user_' + btoa(
-        navigator.userAgent.slice(0, 50) + 
-        Date.now().toString() + 
-        Math.random().toString()
-      ).slice(0, 16);
-      localStorage.setItem('anonymousUserId', userId);
-    }
-    return userId;
-  };
-
   useEffect(() => {
     loadStatistics();
   }, []);
 
   const loadStatistics = async () => {
     try {
-      const userId = getAnonymousUserId();
+      // 使用 Google 登入的 userId
+      const userId = localStorage.getItem('userId');
+
+      if (!userId) {
+        console.error('未找到用戶 ID');
+        setLoading(false);
+        return;
+      }
       
       // 載入用戶的學習記錄
       const sessionsQuery = query(

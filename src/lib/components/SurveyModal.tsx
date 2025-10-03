@@ -102,7 +102,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
   const handleSubmit = async () => {
     // 檢查是否有未完成的問題
     const incompleteStep = checkIncompleteQuestions();
-    
+
     if (incompleteStep !== -1) {
       // 跳轉到未完成的問題
       setCurrentStep(incompleteStep);
@@ -112,8 +112,15 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
 
     setIsSubmitting(true);
     try {
-      const userId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-      
+      // 使用已登入的 Google userId
+      const userId = localStorage.getItem('userId');
+
+      if (!userId) {
+        alert('無法獲取用戶資訊，請重新登入');
+        setIsSubmitting(false);
+        return;
+      }
+
       await addDoc(collection(db, 'surveyResponses'), {
         userId,
         responses: surveyData,
@@ -125,9 +132,8 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
       // 只有在首次填寫時才設定 surveyCompleted 標記
       if (!isManualTrigger) {
         localStorage.setItem('surveyCompleted', 'true');
-        localStorage.setItem('userId', userId);
       }
-      
+
       setIsSubmitting(false); // 在調用 onComplete 前先重置狀態
       onComplete();
       // 問卷完成後不跳轉，留在當前頁面
