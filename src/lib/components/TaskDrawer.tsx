@@ -8,23 +8,17 @@ interface TaskDrawerProps {
   selectedDate: string;
   onSubmit: (formData: {
     selectedDate: string;
-    selectedTime: string;
     selectedCategory: string;
     taskName: string;
     taskDescription: string;
-    reminderEnabled: boolean;
-    reminderMinutesBefore: number;
   }) => void;
   loading?: boolean;
 }
 
 export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, loading = false }: TaskDrawerProps) {
-  const [selectedTime, setSelectedTime] = useState('09:00');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [taskName, setTaskName] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
-  const [reminderEnabled, setReminderEnabled] = useState(true);
-  const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
 
   const categories = [
     '日常',
@@ -36,30 +30,24 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDate || !selectedTime || !selectedCategory || !taskName.trim() || !taskDescription.trim()) {
+    if (!selectedDate || !selectedCategory || !taskName.trim() || !taskDescription.trim()) {
       alert('請填寫所有必填欄位');
       return;
     }
 
     onSubmit({
       selectedDate,
-      selectedTime,
       selectedCategory,
       taskName,
-      taskDescription,
-      reminderEnabled,
-      reminderMinutesBefore
+      taskDescription
     });
   };
 
   const handleClose = () => {
     // 清空表單
-    setSelectedTime('09:00');
     setSelectedCategory('');
     setTaskName('');
     setTaskDescription('');
-    setReminderEnabled(true);
-    setReminderMinutesBefore(30);
     onClose();
   };
 
@@ -101,121 +89,24 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
         {/* 表單內容 */}
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 1. 選擇日期和時間 */}
+            {/* 1. 選擇日期 */}
             <div>
               <label className="block text-lg font-medium text-gray-700 mb-3">
-                選擇日期和時間 <span className="text-red-500">*</span>
+                選擇日期 <span className="text-red-500">*</span>
               </label>
-              <div className="space-y-3">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-blue-800 font-medium">
-                    {new Date(selectedDate).toLocaleDateString('zh-TW', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      weekday: 'long'
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    時間
-                  </label>
-                  <div className="flex space-x-4">
-                    {/* 小時選擇 */}
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-600 mb-1">小時</label>
-                      <select
-                        value={selectedTime.split(':')[0]}
-                        onChange={(e) => {
-                          const minute = selectedTime.split(':')[1];
-                          setSelectedTime(`${e.target.value}:${minute}`);
-                        }}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
-                        required
-                      >
-                        {Array.from({length: 24}, (_, i) => {
-                          const hour = i.toString().padStart(2, '0');
-                          return (
-                            <option key={hour} value={hour}>
-                              {hour}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-                    
-                    {/* 分鐘選擇 */}
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-600 mb-1">分鐘</label>
-                      <select
-                        value={selectedTime.split(':')[1]}
-                        onChange={(e) => {
-                          const hour = selectedTime.split(':')[0];
-                          setSelectedTime(`${hour}:${e.target.value}`);
-                        }}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
-                        required
-                      >
-                        {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(minute => (
-                          <option key={minute} value={minute}>
-                            {minute}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 font-medium">
+                  {new Date(selectedDate).toLocaleDateString('zh-TW', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long'
+                  })}
+                </p>
               </div>
             </div>
 
-            {/* 2. 提醒設定 */}
-            <div>
-              <label className="block text-lg font-medium text-gray-700 mb-3">
-                提醒設定
-              </label>
-              <div className="space-y-4">
-                {/* 是否啟用提醒 */}
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="reminderEnabled"
-                    checked={reminderEnabled}
-                    onChange={(e) => setReminderEnabled(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="reminderEnabled" className="ml-3 text-gray-700">
-                    任務前發送 Email 提醒
-                  </label>
-                </div>
-                
-                {/* 提前提醒時間 */}
-                {reminderEnabled && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      提前提醒時間
-                    </label>
-                    <select
-                      value={reminderMinutesBefore}
-                      onChange={(e) => setReminderMinutesBefore(parseInt(e.target.value))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value={15}>15 分鐘前</option>
-                      <option value={30}>30 分鐘前</option>
-                      <option value={60}>1 小時前</option>
-                      <option value={120}>2 小時前</option>
-                      <option value={360}>6 小時前</option>
-                      <option value={1440}>1 天前</option>
-                    </select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      將在任務開始前發送提醒 Email
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 3. 任務分類標籤 */}
+            {/* 2. 任務分類標籤 */}
             <div>
               <label htmlFor="category" className="block text-lg font-medium text-gray-700 mb-3">
                 任務分類 <span className="text-red-500">*</span>
@@ -279,7 +170,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               </button>
               <button
                 type="submit"
-                disabled={loading || !selectedDate || !selectedTime || !selectedCategory || !taskName.trim() || !taskDescription.trim()}
+                disabled={loading || !selectedDate || !selectedCategory || !taskName.trim() || !taskDescription.trim()}
                 className="flex-2 bg-blue-600 text-white py-4 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium text-lg transition-colors"
               >
                 {loading ? 'AI 生成學習內容中...' : '生成日語學習內容'}

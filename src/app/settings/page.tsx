@@ -17,10 +17,27 @@ export default function Settings() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    // 載入現有設定
+    // 從 localStorage 載入 Google 帳號資訊
+    const userEmail = localStorage.getItem('userEmail') || '';
+    const userName = localStorage.getItem('userName') || '';
+
+    // 載入提醒設定
     const savedSettings = localStorage.getItem('emailSettings');
     if (savedSettings) {
-      setSettings({ ...settings, ...JSON.parse(savedSettings) });
+      const parsed = JSON.parse(savedSettings);
+      setSettings({
+        email: userEmail, // 使用 Google email，不使用舊設定
+        userName: userName, // 使用 Google 名稱
+        dailyReminderEnabled: parsed.dailyReminderEnabled ?? true,
+        dailyReminderTime: parsed.dailyReminderTime || '08:00'
+      });
+    } else {
+      setSettings({
+        email: userEmail,
+        userName: userName,
+        dailyReminderEnabled: true,
+        dailyReminderTime: '08:00'
+      });
     }
   }, []);
 
@@ -47,16 +64,16 @@ export default function Settings() {
         });
 
         if (response.ok) {
-          setMessage('✅ 設定已儲存！測試 Email 已發送到您的信箱');
+          setMessage('設定已儲存！測試 Email 已發送到您的信箱');
         } else {
-          setMessage('⚠️ 設定已儲存，但測試 Email 發送失敗');
+          setMessage('設定已儲存，但測試 Email 發送失敗');
         }
       } else {
-        setMessage('✅ 設定已儲存！');
+        setMessage('設定已儲存！');
       }
     } catch (error) {
       console.error('Save settings error:', error);
-      setMessage('❌ 儲存設定時發生錯誤');
+      setMessage('儲存設定時發生錯誤');
     } finally {
       setIsSaving(false);
     }
@@ -85,33 +102,31 @@ export default function Settings() {
           <div className="space-y-6">
             {/* 基本資訊 */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">基本資訊</h3>
-              
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Google 帳號資訊</h3>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     姓名
                   </label>
-                  <input
-                    type="text"
-                    value={settings.userName}
-                    onChange={(e) => setSettings({ ...settings, userName: e.target.value })}
-                    placeholder="您的姓名"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                    {settings.userName || '未設定'}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    來自您的 Google 帳號
+                  </p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email 地址
                   </label>
-                  <input
-                    type="email"
-                    value={settings.email}
-                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                    placeholder="your@email.com"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                    {settings.email || '未設定'}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    來自您的 Google 帳號
+                  </p>
                 </div>
               </div>
             </div>
@@ -177,16 +192,6 @@ export default function Settings() {
               </button>
             </div>
           </div>
-        </div>
-
-        {/* 說明 */}
-        <div className="bg-blue-50 rounded-xl p-4 mt-6">
-          <h4 className="font-semibold text-blue-800 mb-2">使用說明</h4>
-          <ul className="text-sm text-blue-700 space-y-1">
-            <li>• 每日提醒：每天固定時間發送學習提醒</li>
-            <li>• 任務提醒：可在建立任務時個別設定提醒</li>
-            <li>• 點擊「儲存設定」會發送測試 Email 確認功能正常</li>
-          </ul>
         </div>
 
         {/* 其他功能 */}

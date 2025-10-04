@@ -50,13 +50,13 @@ export default function Home() {
   useEffect(() => {
     // 檢查是否在瀏覽器環境
     if (typeof window === 'undefined') return;
-    
+
     // 檢查用戶 ID
     const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
       setUserId(storedUserId);
     }
-    
+
     // 預載語音庫
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.getVoices();
@@ -64,26 +64,57 @@ export default function Home() {
         window.speechSynthesis.getVoices();
       };
     }
-    
+
     // 檢查流程：用戶註冊 -> 問卷 -> 導覽
     if (!storedUserId) {
       // 沒有用戶ID，顯示註冊介面
       setShowUserRegistration(true);
     } else {
-      // 有用戶ID，檢查問卷狀態
-      const surveyCompleted = localStorage.getItem('surveyCompleted');
-      if (!surveyCompleted) {
-        // 延遲1秒後顯示問卷彈窗
-        const timer = setTimeout(() => {
-          setShowSurvey(true);
-        }, 1000);
-        return () => clearTimeout(timer);
-      } else {
-        // 問卷已完成，檢查導覽
-        checkFirstVisit();
-      }
+      // 有用戶ID，檢查 Firebase 是否已有問卷記錄
+      checkSurveyStatus(storedUserId);
     }
   }, []); // 移除 checkFirstVisit 依賴，避免無限循環
+
+  // 檢查用戶是否已填寫事前問卷
+  const checkSurveyStatus = async (userId: string) => {
+    try {
+      // 先檢查 localStorage 緩存
+      const cachedStatus = localStorage.getItem('surveyCompleted');
+      if (cachedStatus === 'true') {
+        checkFirstVisit();
+        return;
+      }
+
+      // 查詢 Firebase 是否有該用戶的問卷記錄
+      const q = query(
+        collection(db, 'surveyResponses'),
+        where('userId', '==', userId)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // 用戶已填寫過問卷，更新緩存
+        localStorage.setItem('surveyCompleted', 'true');
+        checkFirstVisit();
+      } else {
+        // 用戶未填寫問卷，顯示問卷彈窗
+        setTimeout(() => {
+          setShowSurvey(true);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('檢查問卷狀態失敗:', error);
+      // 發生錯誤時，檢查 localStorage
+      const cachedStatus = localStorage.getItem('surveyCompleted');
+      if (cachedStatus === 'true') {
+        checkFirstVisit();
+      } else {
+        setTimeout(() => {
+          setShowSurvey(true);
+        }, 1000);
+      }
+    }
+  };
 
   // 獨立的後問卷檢查 useEffect - 加入更嚴格的控制
   useEffect(() => {
@@ -521,18 +552,14 @@ export default function Home() {
   // 處理任務提交
   const handleTaskSubmit = async (formData: {
     selectedDate: string;
-    selectedTime: string;
     selectedCategory: string;
     taskName: string;
     taskDescription: string;
-    reminderEnabled: boolean;
-    reminderMinutesBefore: number;
   }) => {
-    const { selectedDate: date, selectedTime, selectedCategory: category, taskName: name, taskDescription, reminderEnabled, reminderMinutesBefore } = formData;
+    const { selectedDate: date, selectedCategory: category, taskName: name, taskDescription } = formData;
 
     const fullTask = `
 日期: ${date}
-時間: ${selectedTime}
 分類: ${category}
 任務名稱: ${name}
 詳細描述: ${taskDescription}
@@ -565,7 +592,7 @@ export default function Home() {
         // 開始學習會話時間記錄
         setSessionStartTime(new Date());
         sessionRecorded.current = false; // 重置記錄標記
-        setCurrentTaskTime(selectedTime);
+        setCurrentTaskTime(null);
         setVoiceUsageCount(0);
         setSavedWords(new Set());
 
