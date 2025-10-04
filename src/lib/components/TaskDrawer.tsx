@@ -1,6 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  validateTaskName,
+  validateTaskDescription,
+  validateCategory,
+  validateDate
+} from '@/lib/inputValidator';
 
 interface TaskDrawerProps {
   isOpen: boolean;
@@ -19,6 +25,12 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
   const [selectedCategory, setSelectedCategory] = useState('');
   const [taskName, setTaskName] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
+  const [errors, setErrors] = useState<{
+    category?: string;
+    taskName?: string;
+    taskDescription?: string;
+    date?: string;
+  }>({});
 
   const categories = [
     '日常',
@@ -30,24 +42,52 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDate || !selectedCategory || !taskName.trim() || !taskDescription.trim()) {
-      alert('請填寫所有必填欄位');
+
+    // 清除之前的錯誤
+    setErrors({});
+
+    // 驗證所有欄位
+    const dateValidation = validateDate(selectedDate);
+    const categoryValidation = validateCategory(selectedCategory, categories);
+    const nameValidation = validateTaskName(taskName);
+    const descriptionValidation = validateTaskDescription(taskDescription);
+
+    // 收集錯誤
+    const newErrors: typeof errors = {};
+    if (!dateValidation.isValid) {
+      newErrors.date = dateValidation.error;
+    }
+    if (!categoryValidation.isValid) {
+      newErrors.category = categoryValidation.error;
+    }
+    if (!nameValidation.isValid) {
+      newErrors.taskName = nameValidation.error;
+    }
+    if (!descriptionValidation.isValid) {
+      newErrors.taskDescription = descriptionValidation.error;
+    }
+
+    // 如果有錯誤，顯示並停止提交
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    // 使用清理後的資料提交
     onSubmit({
-      selectedDate,
-      selectedCategory,
-      taskName,
-      taskDescription
+      selectedDate: dateValidation.sanitized!,
+      selectedCategory: categoryValidation.sanitized!,
+      taskName: nameValidation.sanitized!,
+      taskDescription: descriptionValidation.sanitized!
     });
   };
 
   const handleClose = () => {
-    // 清空表單
+    // 清空表單和錯誤
     setSelectedCategory('');
     setTaskName('');
     setTaskDescription('');
+    setErrors({});
     onClose();
   };
 
@@ -94,8 +134,8 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               <label className="block text-lg font-medium text-gray-700 mb-3">
                 選擇日期 <span className="text-red-500">*</span>
               </label>
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-blue-800 font-medium">
+              <div className={`p-4 rounded-lg ${errors.date ? 'bg-red-50 border border-red-200' : 'bg-blue-50 border border-blue-200'}`}>
+                <p className={errors.date ? 'text-red-800 font-medium' : 'text-blue-800 font-medium'}>
                   {new Date(selectedDate).toLocaleDateString('zh-TW', {
                     year: 'numeric',
                     month: 'long',
@@ -104,6 +144,9 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                   })}
                 </p>
               </div>
+              {errors.date && (
+                <p className="mt-2 text-sm text-red-600">{errors.date}</p>
+              )}
             </div>
 
             {/* 2. 任務分類標籤 */}
@@ -114,8 +157,17 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               <select
                 id="category"
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  if (errors.category) {
+                    setErrors({ ...errors, category: undefined });
+                  }
+                }}
+                className={`w-full p-4 border rounded-lg focus:ring-2 focus:border-transparent text-lg ${
+                  errors.category
+                    ? 'border-red-300 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 required
               >
                 <option value="">請選擇分類...</option>
@@ -125,6 +177,9 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                   </option>
                 ))}
               </select>
+              {errors.category && (
+                <p className="mt-2 text-sm text-red-600">{errors.category}</p>
+              )}
             </div>
 
             {/* 3. 任務名稱 */}
@@ -136,11 +191,24 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                 type="text"
                 id="taskName"
                 value={taskName}
-                onChange={(e) => setTaskName(e.target.value)}
-                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                onChange={(e) => {
+                  setTaskName(e.target.value);
+                  if (errors.taskName) {
+                    setErrors({ ...errors, taskName: undefined });
+                  }
+                }}
+                className={`w-full p-4 border rounded-lg focus:ring-2 focus:border-transparent text-lg ${
+                  errors.taskName
+                    ? 'border-red-300 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="例如：便利商店購買日用品、餐廳點餐、問路等..."
                 required
               />
+              {errors.taskName && (
+                <p className="mt-2 text-sm text-red-600">{errors.taskName}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">1-100 字元</p>
             </div>
 
             {/* 4. 任務詳細描述 */}
@@ -151,12 +219,25 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               <textarea
                 id="taskDescription"
                 value={taskDescription}
-                onChange={(e) => setTaskDescription(e.target.value)}
-                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                onChange={(e) => {
+                  setTaskDescription(e.target.value);
+                  if (errors.taskDescription) {
+                    setErrors({ ...errors, taskDescription: undefined });
+                  }
+                }}
+                className={`w-full p-4 border rounded-lg focus:ring-2 focus:border-transparent text-lg ${
+                  errors.taskDescription
+                    ? 'border-red-300 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 rows={4}
                 placeholder="請詳細描述這個任務的情境、目的、可能遇到的狀況等..."
                 required
               />
+              {errors.taskDescription && (
+                <p className="mt-2 text-sm text-red-600">{errors.taskDescription}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">10-1000 字元</p>
             </div>
 
             {/* 按鈕區域 */}
