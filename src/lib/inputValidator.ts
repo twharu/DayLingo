@@ -61,16 +61,41 @@ const isGibberish = (input: string): boolean => {
     return true;
   }
 
-  // 檢查是否包含過多特殊符號（超過 50%）
+  // 檢查是否包含過多特殊符號（超過 30%）
   const specialCharCount = (trimmed.match(/[^a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\s]/g) || []).length;
   const specialCharRatio = specialCharCount / trimmed.length;
-  if (specialCharRatio > 0.5) {
+  if (specialCharRatio > 0.3) {
     return true;
   }
 
-  // 檢查是否重複相同字元過多次（超過 10 次）
-  const repeatedPattern = /(.)\1{10,}/;
+  // 檢查是否重複相同字元過多次（超過 5 次）
+  const repeatedPattern = /(.)\1{5,}/;
   if (repeatedPattern.test(trimmed)) {
+    return true;
+  }
+
+  // 檢查是否只包含數字
+  if (/^\d+$/.test(trimmed)) {
+    return true;
+  }
+
+  // 檢查是否只包含特殊符號和空白
+  if (/^[^a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff]+$/.test(trimmed)) {
+    return true;
+  }
+
+  // 檢查是否包含過多連續的非字母數字字元（超過 3 個）
+  if (/[^a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\s]{4,}/.test(trimmed)) {
+    return true;
+  }
+
+  // 檢查鍵盤亂打模式（如 asdfghjkl, qwertyuiop）
+  const keyboardPatterns = [
+    /qwerty|asdfgh|zxcvbn/i,
+    /12345|67890/,
+    /abcdef|ghijkl|mnopqr|stuvwx/i,
+  ];
+  if (keyboardPatterns.some(pattern => pattern.test(trimmed))) {
     return true;
   }
 
