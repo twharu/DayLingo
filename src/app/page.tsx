@@ -7,7 +7,6 @@ import Image from 'next/image';
 import SurveyModal from '@/lib/components/SurveyModal';
 import PostUsageSurvey from '@/lib/components/PostUsageSurvey';
 import UserRegistration from '@/lib/components/UserRegistration';
-import DeveloperTestPanel from '@/lib/components/DeveloperTestPanel';
 import FirebaseStatus from '@/lib/components/FirebaseStatus';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
 import MiniCalendar from '@/lib/components/MiniCalendar';
@@ -973,17 +972,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* 開發者測試面板 - 只在開發環境顯示 */}
-      {process.env.NODE_ENV === 'development' && (
-        <DeveloperTestPanel
-          userId={userId}
-          onTriggerPostSurvey={() => setShowPostSurvey(true)}
-          onResetAll={() => {
-            setUserId(null);
-            setShowUserRegistration(true);
-          }}
-        />
-      )}
     </div>
   );
 }
