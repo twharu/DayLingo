@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateJapaneseContent } from '@/lib/openai';
+import { authenticateRequest, getClientIP } from '@/lib/apiAuth';
+import { checkRateLimit } from '@/lib/rateLimiter';
 
 // 新聞搜尋功能已移除，根據用戶要求不再生成新聞內容
 
@@ -62,6 +64,41 @@ B: ありがとうございます。<ruby>袋<rt>ふくろ</rt></ruby>はいか�
 
 export async function POST(request: NextRequest) {
   try {
+    // 1. 身份驗證
+    const authResult = await authenticateRequest(request);
+    if (!authResult.authenticated) {
+      return NextResponse.json(
+        { error: authResult.error || '身份驗證失敗' },
+        { status: 401 }
+      );
+    }
+
+    const userId = authResult.userId!;
+
+    // 2. 速率限制檢查（每分鐘最多 10 次請求）
+    const rateLimitResult = checkRateLimit(userId, {
+      maxRequests: 10,
+      windowMs: 60 * 1000, // 1 分鐘
+    });
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: rateLimitResult.error || '請求過於頻繁',
+          resetTime: rateLimitResult.resetTime
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '10',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+          }
+        }
+      );
+    }
+
+    // 3. 驗證請求內容
     const { task } = await request.json();
 
     if (!task) {
@@ -73,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     let content: string;
 
-    // 檢查是否為測試模式
+    // 4. 檢查是否為測試模式
     if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
       // 使用模擬內容
       content = generateMockContent(task);
@@ -84,11 +121,21 @@ export async function POST(request: NextRequest) {
       content = await generateJapaneseContent(task);
     }
 
-    return NextResponse.json({
-      content,
-      timestamp: new Date().toISOString(),
-      mode: process.env.NEXT_PUBLIC_TEST_MODE === 'true' ? 'test' : 'production'
-    });
+    // 5. 返回結果（包含速率限制資訊）
+    return NextResponse.json(
+      {
+        content,
+        timestamp: new Date().toISOString(),
+        mode: process.env.NEXT_PUBLIC_TEST_MODE === 'true' ? 'test' : 'production'
+      },
+      {
+        headers: {
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+        }
+      }
+    );
 
   } catch (error) {
     console.error('API Error:', error);

@@ -575,9 +575,26 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId || '', // 傳送用戶 ID 進行身份驗證
         },
         body: JSON.stringify({ task: fullTask }),
       });
+
+      // 處理速率限制錯誤
+      if (response.status === 429) {
+        const errorData = await response.json();
+        alert(`⚠️ ${errorData.error}\n\n請稍後再試。`);
+        setLoading(false);
+        return;
+      }
+
+      // 處理身份驗證錯誤
+      if (response.status === 401) {
+        const errorData = await response.json();
+        alert(`🔒 ${errorData.error}\n\n請重新登入。`);
+        setLoading(false);
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
