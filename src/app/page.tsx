@@ -733,7 +733,7 @@ export default function Home() {
                 おはよう！早安！
               </h1>
               <p className="text-gray-600">
-                記錄你的日常任務，AI會生成相關的日文詞彙
+                記錄你的待辦事項，AI會生成相關的日文詞彙
               </p>
             </div>
             <div id="hamburger-menu">
@@ -761,14 +761,14 @@ export default function Home() {
                   setSelectedDate(getTodayDate());
                   setIsTaskDrawerOpen(true);
                 }}
-                title="建立新任務"
+                title="建立新代辦事項"
               >
                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
               </button>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                輸入今天的第一個任務吧！
+                輸入今天的第一個代辦事項吧！
               </h3>
               <p className="text-gray-600 mb-6">
                 點擊下方按鈕或日曆上的日期來創建你的第一個學習任務
@@ -784,7 +784,7 @@ export default function Home() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                <span>建立第一個任務</span>
+                <span>建立第一個代辦事項</span>
               </button>
             </div>
           </div>
@@ -807,7 +807,7 @@ export default function Home() {
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 mb-2">關聯詞彙</h2>
                   <p className="text-gray-500 text-sm">
-                    點擊單字卡片可以查看例句和詳細資訊
+                    點擊單字可以查看例句和詳細資訊
                   </p>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">

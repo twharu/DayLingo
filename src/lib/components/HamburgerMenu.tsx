@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface HamburgerMenuProps {
@@ -11,6 +11,24 @@ interface HamburgerMenuProps {
 
 export default function HamburgerMenu({ currentPath, onClearContent, hasContent }: HamburgerMenuProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userPhotoURL, setUserPhotoURL] = useState('');
+
+  // 載入使用者資訊
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setUserName(localStorage.getItem('userName') || '使用者');
+      setUserPhotoURL(localStorage.getItem('userPhotoURL') || '');
+    }
+  }, []);
+
+  // 根據時間取得問候語
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'おはよう！早安';
+    if (hour < 18) return 'こんにちは！午安';
+    return 'こんばんは！晚安';
+  };
 
   return (
     <>
@@ -49,7 +67,33 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
                 </svg>
               </button>
             </div>
-            
+
+            {/* 使用者資訊區塊 */}
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+              <div className="flex items-center space-x-4">
+                {/* 使用者頭像 */}
+                <div className="flex-shrink-0">
+                  {userPhotoURL ? (
+                    <img
+                      src={userPhotoURL}
+                      alt="使用者頭像"
+                      className="w-14 h-14 rounded-full border-2 border-white shadow-md"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-bold border-2 border-white shadow-md">
+                      {userName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+
+                {/* 問候語和使用者名稱 */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-600 mb-1">{getGreeting()}</p>
+                  <p className="text-lg font-bold text-gray-800 truncate">{userName}！</p>
+                </div>
+              </div>
+            </div>
+
             {/* 選單項目 */}
             <nav className="p-6 space-y-4">
               <Link 
