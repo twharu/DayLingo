@@ -132,7 +132,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
             {/* 1. 選擇日期 */}
             <div>
               <label className="block text-lg font-medium text-gray-700 mb-3">
-                選擇日期 <span className="text-red-500">*</span>
+                日期 <span className="text-red-500">*</span>
               </label>
               <div className={`p-4 rounded-lg ${errors.date ? 'bg-red-50 border border-red-200' : 'bg-blue-50 border border-blue-200'}`}>
                 <p className={errors.date ? 'text-red-800 font-medium' : 'text-blue-800 font-medium'}>
@@ -202,7 +202,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                     ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
-                placeholder="例如：便利商店購買日用品、餐廳點餐、問路等..."
+                placeholder="例如：去商店街、跟朋友見面、去銀行辦事等..."
                 required
               />
               {errors.taskName && (
@@ -237,7 +237,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               {errors.taskDescription && (
                 <p className="mt-2 text-sm text-red-600">{errors.taskDescription}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">10-1000 字元</p>
+              <p className="mt-1 text-xs text-gray-500">5-100 字元</p>
             </div>
 
             {/* 按鈕區域 */}

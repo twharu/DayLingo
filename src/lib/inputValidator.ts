@@ -203,18 +203,18 @@ export const validateTaskDescription = (description: string): ValidationResult =
     };
   }
 
-  // 檢查長度（10-1000 字元）
-  if (sanitized.length < 10) {
+  // 檢查長度（5-100 字元）
+  if (sanitized.length < 5) {
     return {
       isValid: false,
-      error: '任務描述至少需要 10 個字元'
+      error: '任務描述至少需要 5 個字元'
     };
   }
 
-  if (sanitized.length > 1000) {
+  if (sanitized.length > 100) {
     return {
       isValid: false,
-      error: '任務描述不能超過 1000 字元'
+      error: '任務描述不能超過 100 字元'
     };
   }
 
