@@ -99,6 +99,25 @@ const isGibberish = (input: string): boolean => {
     return true;
   }
 
+  // 檢查子音/母音比例是否異常（針對英文/拼音亂碼）
+  // 正常文字應該有合理的子音母音分布
+  const latinChars = trimmed.match(/[a-zA-Z]/g);
+  if (latinChars && latinChars.length > 3) {
+    const vowels = trimmed.match(/[aeiouAEIOU]/g) || [];
+    const vowelRatio = vowels.length / latinChars.length;
+
+    // 母音比例應該在 20%-50% 之間（過低或過高都可能是亂碼）
+    if (vowelRatio < 0.15 || vowelRatio > 0.6) {
+      return true;
+    }
+  }
+
+  // 檢查是否缺少空格（長文字但沒有空格可能是亂碼）
+  // 超過 20 個字元的純英文/數字但沒有空格
+  if (trimmed.length > 20 && !/\s/.test(trimmed) && /^[a-zA-Z0-9]+$/.test(trimmed)) {
+    return true;
+  }
+
   return false;
 };
 
