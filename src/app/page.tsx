@@ -30,12 +30,21 @@ export default function Home() {
   const [taskName, setTaskName] = useState('');
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState<{content: string} | null>(null);
-  const [parsedWords, setParsedWords] = useState<{word: string, reading: string, meaning: string, example: string, exampleTranslation: string}[]>([]);
-  const [parsedPhrases, setParsedPhrases] = useState<{word: string, reading: string, meaning: string, example: string, exampleTranslation: string}[]>([]);
+  const [parsedWords, setParsedWords] = useState<{
+    word: string,
+    reading: string,
+    meaning: string,
+    example: string,
+    exampleTranslation: string,
+    phrase?: string,
+    phraseTranslation?: string,
+    dialogueA?: string,
+    dialogueATranslation?: string,
+    dialogueB?: string,
+    dialogueBTranslation?: string
+  }[]>([]);
   const [savingWords, setSavingWords] = useState<Set<number>>(new Set());
   const [savedWords, setSavedWords] = useState<Set<number>>(new Set());
-  const [savingPhrases, setSavingPhrases] = useState<Set<number>>(new Set());
-  const [savedPhrases, setSavedPhrases] = useState<Set<number>>(new Set());
   const contentRef = useRef<HTMLDivElement>(null);
   const sessionRecorded = useRef<boolean>(false);
   const [showSurvey, setShowSurvey] = useState(false);
@@ -43,7 +52,6 @@ export default function Home() {
   const [showUserRegistration, setShowUserRegistration] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
-  const [selectedPhraseIndex, setSelectedPhraseIndex] = useState<number | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [voiceUsageCount, setVoiceUsageCount] = useState(0);
   const [showPostSurvey, setShowPostSurvey] = useState(false);
@@ -211,9 +219,10 @@ export default function Home() {
 
   const parseWords = (content: string) => {
     const words = [];
-    const phrases = [];
     const lines = content.split('\n');
     let currentSection = '';
+
+    console.log('🔍 開始解析，總共', lines.length, '行');
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -221,23 +230,26 @@ export default function Home() {
       // 檢查區塊標題
       if (line.includes('關聯單字') || line.includes('## 關聯單字')) {
         currentSection = 'words';
-        continue;
-      }
-
-      if (line.includes('常用詞組') || line.includes('## 常用詞組')) {
-        currentSection = 'phrases';
+        console.log('✅ 找到關聯單字區塊');
         continue;
       }
 
       if (line.includes('## 日常對話')) {
         currentSection = '';
+        console.log('✅ 找到日常對話區塊，停止解析單字');
         continue;
       }
 
-      // 解析單字或詞組
-      if ((currentSection === 'words' || currentSection === 'phrases') && line.match(/^\d+\./)) {
-        // 移除數字編號
-        const cleanLine = line.replace(/^\d+\.\s*/, '');
+      // 解析單字（支持 "1." 或 "### 1." 格式）
+      // 如果遇到 ### 1. 格式，自動進入 words section
+      if (line.match(/^###\s*1\./)) {
+        currentSection = 'words';
+        console.log('✅ 自動檢測到單字區塊開始 (### 1. 格式)');
+      }
+
+      if (currentSection === 'words' && line.match(/^(###\s*)?\d+\./)) {
+        // 移除數字編號和可能的 ### 前綴
+        const cleanLine = line.replace(/^###\s*\d+\.\s*/, '').replace(/^\d+\.\s*/, '');
         const wordMatch = cleanLine.match(/^(.+?)\s*-\s*(.+)$/);
 
         if (wordMatch) {
@@ -266,27 +278,75 @@ export default function Home() {
             }
           }
 
+          // 找詞組
+          let phrase = '';
+          let phraseTranslation = '';
+          if (i + 2 < lines.length && lines[i + 2].includes('詞組：')) {
+            const phraseLine = lines[i + 2];
+            const phraseMatch = phraseLine.match(/詞組：(.+?)\s*-\s*(.+)$/);
+            if (phraseMatch) {
+              phrase = phraseMatch[1].trim();
+              phraseTranslation = phraseMatch[2].trim();
+            }
+          }
+
+          // 找小對話
+          let dialogueA = '';
+          let dialogueATranslation = '';
+          let dialogueB = '';
+          let dialogueBTranslation = '';
+
+          // 從當前位置開始找「小對話：」標記
+          for (let j = i + 1; j < Math.min(i + 10, lines.length); j++) {
+            if (lines[j].includes('小對話：')) {
+              // 找 A:
+              if (j + 1 < lines.length && lines[j + 1].trim().startsWith('A:')) {
+                const dialogueALine = lines[j + 1].trim().substring(2).trim(); // 移除 "A:"
+                const dialogueAMatch = dialogueALine.match(/^(.+?)\s*-\s*(.+)$/);
+                if (dialogueAMatch) {
+                  dialogueA = dialogueAMatch[1].trim();
+                  dialogueATranslation = dialogueAMatch[2].trim();
+                }
+              }
+              // 找 B:
+              if (j + 2 < lines.length && lines[j + 2].trim().startsWith('B:')) {
+                const dialogueBLine = lines[j + 2].trim().substring(2).trim(); // 移除 "B:"
+                const dialogueBMatch = dialogueBLine.match(/^(.+?)\s*-\s*(.+)$/);
+                if (dialogueBMatch) {
+                  dialogueB = dialogueBMatch[1].trim();
+                  dialogueBTranslation = dialogueBMatch[2].trim();
+                }
+              }
+              break;
+            }
+          }
+
           const item = {
             word: word.trim(),
             reading: reading.trim(),
             meaning: meaning.trim(),
             example,
-            exampleTranslation
+            exampleTranslation,
+            phrase,
+            phraseTranslation,
+            dialogueA,
+            dialogueATranslation,
+            dialogueB,
+            dialogueBTranslation
           };
 
           if (word && reading && meaning) {
-            if (currentSection === 'words') {
-              words.push(item);
-            } else if (currentSection === 'phrases') {
-              phrases.push(item);
-            }
+            words.push(item);
+            console.log(`📌 解析到第 ${words.length} 個單字:`, word, reading, meaning);
+          } else {
+            console.log('⚠️ 單字解析失敗，缺少必要欄位:', { word, reading, meaning });
           }
         }
       }
     }
 
+    console.log('✅ 解析完成，總共解析到', words.length, '個單字');
     setParsedWords(words);
-    setParsedPhrases(phrases);
   };
 
   const filterContent = (content: string) => {
@@ -347,35 +407,6 @@ export default function Home() {
     });
   };
 
-  const savePhrase = async (phraseIndex: number) => {
-    const phrase = parsedPhrases[phraseIndex];
-    if (!phrase) return;
-
-    setSavingPhrases(prev => new Set(prev).add(phraseIndex));
-
-    try {
-      await addDoc(collection(db, 'savedWords'), {
-        word: phrase.word,
-        reading: phrase.reading,
-        meaning: phrase.meaning,
-        example: phrase.example,
-        exampleTranslation: phrase.exampleTranslation,
-        category: selectedCategory,
-        savedAt: new Date().toISOString()
-      });
-
-      setSavedPhrases(prev => new Set(prev).add(phraseIndex));
-    } catch (error) {
-      console.error('儲存詞組失敗:', error);
-      alert('儲存失敗，請稍後再試');
-    }
-
-    setSavingPhrases(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(phraseIndex);
-      return newSet;
-    });
-  };
 
   const preprocessJapaneseText = (text: string) => {
     // 針對常見的日語發音問題做預處理
@@ -635,6 +666,12 @@ export default function Home() {
       await recordLearningSession();
     }
 
+    // 先關閉抽屜，讓用戶看到 loading 動畫
+    setIsTaskDrawerOpen(false);
+
+    // 稍微延遲一下確保抽屜關閉動畫完成
+    await new Promise(resolve => setTimeout(resolve, 300));
+
     setLoading(true);
     try {
       const response = await fetch('/api/generate-content', {
@@ -664,6 +701,7 @@ export default function Home() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('📝 收到的完整內容:', data.content);
         setContent(data);
         parseWords(data.content);
 
@@ -681,9 +719,6 @@ export default function Home() {
         // 增加使用次數
         incrementParticipantUsage();
 
-        // 關閉抽屜
-        setIsTaskDrawerOpen(false);
-        
         // 等待一下讓內容渲染完成，然後滾動到內容區域
         setTimeout(() => {
           contentRef.current?.scrollIntoView({ 
@@ -815,8 +850,8 @@ export default function Home() {
           <MiniCalendar onDateClick={handleDateClick} />
         </div>
 
-        {/* 空狀態提示 - 當沒有任務記錄時顯示 */}
-        {!content && (
+        {/* 空狀態提示 - 當沒有任務記錄且不在載入中時顯示 */}
+        {!content && !loading && (
           <div className="bg-white rounded-lg shadow-lg p-8 mb-6 text-center">
             <div className="max-w-md mx-auto">
               <button 
@@ -927,67 +962,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* 常用詞組區域 */}
-            {parsedPhrases.length > 0 && (
-              <div className="bg-white rounded-lg shadow-lg p-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">常用詞組</h2>
-                  <p className="text-gray-500 text-sm">
-                    點擊詞組查看例句
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                  {parsedPhrases.map((phrase, index) => (
-                    <div
-                      key={index}
-                      className="border border-gray-200 rounded-lg p-3 md:p-4 hover:border-blue-400 transition-colors cursor-pointer min-h-[120px] md:min-h-[140px] flex items-center justify-center"
-                      onClick={() => setSelectedPhraseIndex(index)}
-                    >
-                      <div className="text-center w-full">
-                        <p className="text-blue-500 font-medium mb-2 flex items-center justify-center text-sm">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              playSound(phrase.reading);
-                            }}
-                            className="mr-1 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
-                            title="播放讀音"
-                          >
-                            <Image
-                              src="/icons/volume.svg"
-                              alt="播放讀音"
-                              width={14}
-                              height={14}
-                            />
-                          </button>
-                          <span className="text-xs md:text-sm">{phrase.reading}</span>
-                        </p>
-                        <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 mb-2 md:mb-3">
-                          {phrase.word}
-                        </h3>
-                        <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-2">{phrase.meaning}</p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            savePhrase(index);
-                          }}
-                          disabled={savingPhrases.has(index) || savedPhrases.has(index)}
-                          className={`w-full px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors text-xs md:text-sm ${
-                            savedPhrases.has(index)
-                              ? 'bg-green-600 text-white cursor-default'
-                              : savingPhrases.has(index)
-                                ? 'bg-gray-400 text-white cursor-not-allowed'
-                                : 'bg-blue-500 text-white hover:bg-blue-600'
-                          }`}
-                        >
-                          {savingPhrases.has(index) ? '儲存中...' : savedPhrases.has(index) ? '已收藏' : '收藏'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* 例句彈窗 */}
             {selectedWordIndex !== null && parsedWords[selectedWordIndex] && (
@@ -1024,7 +998,7 @@ export default function Home() {
                   </div>
                   
                   {parsedWords[selectedWordIndex].example && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="bg-gray-50 p-4 rounded-lg mb-4">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-gray-800">例句：</h4>
                         <button
@@ -1041,27 +1015,126 @@ export default function Home() {
                           className="flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm"
                           title="播放例句"
                         >
-                          <Image 
-                            src="/icons/volume.svg" 
-                            alt="播放例句" 
-                            width={16} 
+                          <Image
+                            src="/icons/volume.svg"
+                            alt="播放例句"
+                            width={16}
                             height={16}
                           />
-                          播放
                         </button>
                       </div>
-                      <p className="text-gray-800 mb-3 text-lg leading-relaxed">
-                        <span 
+                      <p className="text-gray-800 text-lg leading-relaxed mb-2">
+                        <span
                           className="ruby-content"
                           dangerouslySetInnerHTML={{ __html: parsedWords[selectedWordIndex].example }}
                           style={{ fontSize: '18px', lineHeight: '2' }}
                         />
                       </p>
-                      <h4 className="font-medium text-gray-800 mb-2">翻譯：</h4>
-                      <p className="text-gray-600 text-lg">{parsedWords[selectedWordIndex].exampleTranslation}</p>
+                      <p className="text-gray-600">{parsedWords[selectedWordIndex].exampleTranslation}</p>
                     </div>
                   )}
-                  
+
+                  {parsedWords[selectedWordIndex].phrase && (
+                    <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-800">相關詞組：</h4>
+                        <button
+                          onClick={() => {
+                            let cleanPhrase = parsedWords[selectedWordIndex].phrase || '';
+                            cleanPhrase = cleanPhrase.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
+                            cleanPhrase = cleanPhrase.replace(/<[^>]*>/g, '');
+                            playSound(cleanPhrase);
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm"
+                          title="播放詞組"
+                        >
+                          <Image
+                            src="/icons/volume.svg"
+                            alt="播放詞組"
+                            width={16}
+                            height={16}
+                          />
+                        </button>
+                      </div>
+                      <p className="text-gray-800 text-lg leading-relaxed mb-2">
+                        <span
+                          className="ruby-content"
+                          dangerouslySetInnerHTML={{ __html: parsedWords[selectedWordIndex].phrase }}
+                          style={{ fontSize: '18px', lineHeight: '2' }}
+                        />
+                      </p>
+                      <p className="text-gray-600">{parsedWords[selectedWordIndex].phraseTranslation}</p>
+                    </div>
+                  )}
+
+                  {parsedWords[selectedWordIndex].dialogueA && parsedWords[selectedWordIndex].dialogueB && (
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-800 mb-3">對話練習：</h4>
+                      <div className="space-y-3">
+                        <div className="bg-white p-3 rounded">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-purple-600">A:</span>
+                            <button
+                              onClick={() => {
+                                let cleanDialogueA = parsedWords[selectedWordIndex].dialogueA || '';
+                                cleanDialogueA = cleanDialogueA.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
+                                cleanDialogueA = cleanDialogueA.replace(/<[^>]*>/g, '');
+                                playSound(cleanDialogueA);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 text-purple-600 hover:bg-purple-100 rounded transition-colors text-sm"
+                              title="播放對話"
+                            >
+                              <Image
+                                src="/icons/volume.svg"
+                                alt="播放"
+                                width={14}
+                                height={14}
+                              />
+                            </button>
+                          </div>
+                          <p className="text-gray-800 mb-1 leading-relaxed">
+                            <span
+                              className="ruby-content"
+                              dangerouslySetInnerHTML={{ __html: parsedWords[selectedWordIndex].dialogueA }}
+                              style={{ fontSize: '16px', lineHeight: '1.8' }}
+                            />
+                          </p>
+                          <p className="text-gray-600 text-sm">{parsedWords[selectedWordIndex].dialogueATranslation}</p>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-purple-600">B:</span>
+                            <button
+                              onClick={() => {
+                                let cleanDialogueB = parsedWords[selectedWordIndex].dialogueB || '';
+                                cleanDialogueB = cleanDialogueB.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
+                                cleanDialogueB = cleanDialogueB.replace(/<[^>]*>/g, '');
+                                playSound(cleanDialogueB);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 text-purple-600 hover:bg-purple-100 rounded transition-colors text-sm"
+                              title="播放對話"
+                            >
+                              <Image
+                                src="/icons/volume.svg"
+                                alt="播放"
+                                width={14}
+                                height={14}
+                              />
+                            </button>
+                          </div>
+                          <p className="text-gray-800 mb-1 leading-relaxed">
+                            <span
+                              className="ruby-content"
+                              dangerouslySetInnerHTML={{ __html: parsedWords[selectedWordIndex].dialogueB }}
+                              style={{ fontSize: '16px', lineHeight: '1.8' }}
+                            />
+                          </p>
+                          <p className="text-gray-600 text-sm">{parsedWords[selectedWordIndex].dialogueBTranslation}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-6 flex gap-3">
                     <button
                       onClick={() => {
@@ -1090,124 +1163,60 @@ export default function Home() {
               </div>
             )}
 
-            {/* 詞組例句彈窗 */}
-            {selectedPhraseIndex !== null && parsedPhrases[selectedPhraseIndex] && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setSelectedPhraseIndex(null)}>
-                <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                        {parsedPhrases[selectedPhraseIndex].word}
-                      </h3>
-                      <p className="text-lg text-gray-600 mb-3">{parsedPhrases[selectedPhraseIndex].meaning}</p>
-                      <p className="text-blue-500 font-medium flex items-center">
-                        <button
-                          onClick={() => playSound(parsedPhrases[selectedPhraseIndex].reading)}
-                          className="mr-2 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
-                          title="播放讀音"
-                        >
-                          <Image
-                            src="/icons/volume.svg"
-                            alt="播放讀音"
-                            width={18}
-                            height={18}
-                          />
-                        </button>
-                        {parsedPhrases[selectedPhraseIndex].reading}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setSelectedPhraseIndex(null)}
-                      className="text-gray-400 hover:text-gray-600 text-2xl"
-                    >
-                      ×
-                    </button>
-                  </div>
 
-                  {parsedPhrases[selectedPhraseIndex].example && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-800">例句：</h4>
-                        <button
-                          onClick={() => {
-                            let cleanExample = parsedPhrases[selectedPhraseIndex].example;
-                            cleanExample = cleanExample.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
-                            cleanExample = cleanExample.replace(/<[^>]*>/g, '');
-                            playSound(cleanExample);
-                          }}
-                          className="flex items-center gap-1 px-2 py-1 text-blue-500 hover:bg-blue-100 rounded transition-colors text-sm"
-                          title="播放例句"
-                        >
-                          <Image
-                            src="/icons/volume.svg"
-                            alt="播放例句"
-                            width={16}
-                            height={16}
-                          />
-                          播放
-                        </button>
-                      </div>
-                      <p className="text-gray-800 mb-3 text-lg leading-relaxed">
-                        <span
-                          className="ruby-content"
-                          dangerouslySetInnerHTML={{ __html: parsedPhrases[selectedPhraseIndex].example }}
-                          style={{ fontSize: '18px', lineHeight: '2' }}
-                        />
-                      </p>
-                      <h4 className="font-medium text-gray-800 mb-2">翻譯：</h4>
-                      <p className="text-gray-600 text-lg">{parsedPhrases[selectedPhraseIndex].exampleTranslation}</p>
-                    </div>
-                  )}
-
-                  <div className="mt-6 flex gap-3">
-                    <button
-                      onClick={() => {
-                        savePhrase(selectedPhraseIndex);
-                        setSelectedPhraseIndex(null);
-                      }}
-                      disabled={savingPhrases.has(selectedPhraseIndex) || savedPhrases.has(selectedPhraseIndex)}
-                      className={`flex-1 px-4 py-3 rounded-lg transition-colors ${
-                        savedPhrases.has(selectedPhraseIndex)
-                          ? 'bg-green-600 text-white cursor-default'
-                          : savingPhrases.has(selectedPhraseIndex)
-                            ? 'bg-gray-400 text-white cursor-not-allowed'
-                            : 'bg-blue-500 text-white hover:bg-blue-600'
-                      }`}
-                    >
-                      {savingPhrases.has(selectedPhraseIndex) ? '儲存中...' : savedPhrases.has(selectedPhraseIndex) ? '已收藏' : '收藏這個詞組'}
-                    </button>
-                    <button
-                      onClick={() => setSelectedPhraseIndex(null)}
-                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      關閉
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 完整內容顯示 */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">對話例</h2>
-              <div className="prose prose-lg max-w-none">
-                <div 
-                  className="whitespace-pre-wrap text-gray-700 leading-relaxed ruby-content"
-                  dangerouslySetInnerHTML={{ __html: filterContent(content.content) }}
-                  style={{
-                    fontSize: '18px',
-                    lineHeight: '2'
-                  }}
-                />
-              </div>
-            </div>
           </div>
         )}
 
         {loading && (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600 text-lg">AI 正在為您生成個人化的日語學習內容...</p>
+            {/* 雙圈旋轉動畫 */}
+            <div className="relative inline-block mb-6">
+              <div className="animate-spin rounded-full h-20 w-20 border-4 border-blue-200 border-t-blue-600"></div>
+              <div
+                className="absolute top-3 left-3 rounded-full h-14 w-14 border-4 border-purple-200 border-b-purple-600"
+                style={{
+                  animation: 'spin 1.5s linear infinite reverse'
+                }}
+              ></div>
+            </div>
+
+            {/* 主標題 */}
+            <h3 className="text-xl font-bold text-gray-800 mb-3 animate-pulse">
+              AI 正在為您生成學習內容
+            </h3>
+
+            {/* 跳動的點點 */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <span className="inline-block w-2.5 h-2.5 bg-blue-600 rounded-full animate-bounce"></span>
+              <span className="inline-block w-2.5 h-2.5 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+              <span className="inline-block w-2.5 h-2.5 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+            </div>
+
+            {/* 進度說明 */}
+            <div className="max-w-md mx-auto space-y-2">
+              <div className="flex items-center justify-center gap-2 text-gray-600">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm">分析任務內容中</p>
+              </div>
+              <div className="flex items-center justify-center gap-2 text-gray-600">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <p className="text-sm">挑選最實用的單字和表達</p>
+              </div>
+              <div className="flex items-center justify-center gap-2 text-gray-600">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                <p className="text-sm">生成自然對話和例句</p>
+              </div>
+
+              <p className="text-gray-400 text-xs pt-3">
+                ⏱️ 預計需要 10-15 秒，請稍候
+              </p>
+            </div>
           </div>
         )}
       </div>
