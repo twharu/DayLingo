@@ -567,33 +567,33 @@ export default function Home() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       // 計數語音使用
       setVoiceUsageCount(prev => prev + 1);
-      
+
       // 停止當前播放
       window.speechSynthesis.cancel();
-      
+
       // 預處理日語文字
       const processedText = preprocessJapaneseText(text);
       console.log('原文:', text, '處理後:', processedText);
-      
+
       const utterance = new SpeechSynthesisUtterance(processedText);
       utterance.lang = 'ja-JP'; // 設定為日語
-      utterance.rate = 0.5; // 非常慢的語速，便於學習
+      utterance.rate = 0.55; // 非常慢的語速，便於學習
       utterance.volume = 0.8; // 音量
       utterance.pitch = 1.0; // 語調高度 (0.1-2.0)
-      
+
       // 嘗試找到日語女聲 (優先女聲)
       const voices = window.speechSynthesis.getVoices();
-      
+
       // 按優先級排序尋找女聲
-      const femaleVoice = 
+      const femaleVoice =
         // 1. 尋找日語女聲 (包含 Female 關鍵字)
         voices.find(voice => voice.lang.includes('ja') && voice.name.includes('Female')) ||
         // 2. 尋找 Kyoko (macOS 日語女聲)
         voices.find(voice => voice.lang.includes('ja') && voice.name.includes('Kyoko')) ||
         // 3. 尋找其他常見的日語女聲名稱
         voices.find(voice => voice.lang.includes('ja') && (
-          voice.name.includes('女性') || 
-          voice.name.includes('Otoya') || 
+          voice.name.includes('女性') ||
+          voice.name.includes('Otoya') ||
           voice.name.includes('Sayaka') ||
           voice.name.includes('Haruka')
         )) ||
@@ -601,12 +601,12 @@ export default function Home() {
         voices.find(voice => voice.lang === 'ja-JP' && voice.localService) ||
         // 5. 任何日語語音
         voices.find(voice => voice.lang.includes('ja'));
-      
+
       if (femaleVoice) {
         utterance.voice = femaleVoice;
         console.log('使用語音:', femaleVoice.name, femaleVoice.lang);
       }
-      
+
       window.speechSynthesis.speak(utterance);
     } else {
       alert('您的瀏覽器不支援語音播放功能');
@@ -979,10 +979,10 @@ export default function Home() {
                           className="mr-2 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
                           title="播放讀音"
                         >
-                          <Image 
-                            src="/icons/volume.svg" 
-                            alt="播放讀音" 
-                            width={18} 
+                          <Image
+                            src="/icons/volume.svg"
+                            alt="播放讀音"
+                            width={18}
                             height={18}
                           />
                         </button>

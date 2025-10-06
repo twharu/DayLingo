@@ -379,7 +379,6 @@ export default function VocabularyPage() {
                               width={16} 
                               height={16}
                             />
-                            播放
                           </button>
                         </div>
                         <p className="text-gray-800 mb-3">
@@ -390,7 +389,7 @@ export default function VocabularyPage() {
                           />
                         </p>
                         <p className="text-gray-600">
-                          <span className="font-medium">翻譯：</span>{word.exampleTranslation}
+                          {word.exampleTranslation}
                         </p>
                       </div>
 

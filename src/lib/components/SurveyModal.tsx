@@ -179,7 +179,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 </label>
                 <input
                   type="text"
-                  placeholder="例：8個月"
+                  placeholder="例：3個月"
                   value={surveyData.timeInJapan}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, timeInJapan: e.target.value }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

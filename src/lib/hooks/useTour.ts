@@ -13,8 +13,8 @@ export const useTour = () => {
       {
         element: '#app-title',
         popover: {
-          title: '歡迎使用日語學習應用！',
-          description: '這裡是你的日語學習助手，我們會幫你建立待辦事項並生成相關學習內容。',
+          title: '歡迎使用DayLingo！',
+          description: '這裡是你的日文單字學習助手，我們會幫你建立待辦事項並生成相關學習內容。',
           side: 'bottom',
           align: 'center'
         }
@@ -31,7 +31,7 @@ export const useTour = () => {
       {
         element: '#create-task-button',
         popover: {
-          title: '建立第一個任務',
+          title: '建立第一個待辦事項',
           description: '點擊這個按鈕開始建立你的第一個待辦事項！',
           side: 'top',
           align: 'center'
@@ -48,7 +48,7 @@ export const useTour = () => {
       },
       {
         popover: {
-          title: '開始你的日語學習之旅！',
+          title: '開始你的日文學習之旅！',
           description: '現在你已經了解了基本功能，開始建立你的第一個待辦事項吧！如需重看教學，可以點擊右上角選單 → 設定 → 重新觀看網站導覽。'
         }
       }

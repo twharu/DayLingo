@@ -231,7 +231,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 rows={4}
-                placeholder="請詳細描述待辦事項的情境、目的、可能遇到的狀況等..."
+                placeholder="情境、目的、商品名稱等..."
                 required
               />
               {errors.taskDescription && (

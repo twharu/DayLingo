@@ -111,7 +111,6 @@ export default function PostUsageSurvey({ onClose, userId }: PostUsageSurveyProp
         "AI生成學習內容",
         "語音播放功能",
         "單字收藏功能",
-        "學習統計功能",
         "例句展示功能"
       ]
     },
