@@ -115,7 +115,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
 
         {/* 標題列 */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800">建立任務</h2>
+          <h2 className="text-xl font-bold text-gray-800">建立待辦事項</h2>
           <button
             onClick={handleClose}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -152,7 +152,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
             {/* 2. 任務分類標籤 */}
             <div>
               <label htmlFor="category" className="block text-lg font-medium text-gray-700 mb-3">
-                任務分類 <span className="text-red-500">*</span>
+                待辦事項分類 <span className="text-red-500">*</span>
               </label>
               <select
                 id="category"
@@ -185,7 +185,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
             {/* 3. 任務名稱 */}
             <div>
               <label htmlFor="taskName" className="block text-lg font-medium text-gray-700 mb-3">
-                任務名稱 <span className="text-red-500">*</span>
+                待辦事項 <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -214,7 +214,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
             {/* 4. 任務詳細描述 */}
             <div>
               <label htmlFor="taskDescription" className="block text-lg font-medium text-gray-700 mb-3">
-                任務詳細描述 <span className="text-red-500">*</span>
+                待辦事項描述 <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="taskDescription"
@@ -231,7 +231,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 rows={4}
-                placeholder="請詳細描述這個任務的情境、目的、可能遇到的狀況等..."
+                placeholder="請詳細描述待辦事項的情境、目的、可能遇到的狀況等..."
                 required
               />
               {errors.taskDescription && (

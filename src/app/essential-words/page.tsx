@@ -42,7 +42,7 @@ const essentialWords = {
     tips: [
       '初期費用通常是房租的3-6倍（敷金+禮金+仲介費+首月房租）',
       '需要保證人或保證公司，外國人多使用保證公司',
-      '租屋後，水電瓦斯需自己打電話或線上申請開通',
+      '租屋後，水電瓦斯需自行打電話或線上申請開通',
       '可利用 Suumo、at home 等網站找房',
       '注意管理費、停車費等額外費用'
     ],
@@ -60,7 +60,7 @@ const essentialWords = {
       { word: '保証人', reading: 'ほしょうにん', meaning: '保證人' },
       { word: '保証会社', reading: 'ほしょうかいしゃ', meaning: '保證公司' },
       { word: '不動産屋', reading: 'ふどうさんや', meaning: '房仲業者' },
-      { word: 'ワンルーム', reading: 'ワンルーム', meaning: '套房' },
+      { word: 'ワンルーム', reading: 'わんるーむ', meaning: '套房' },
       { word: '駅近', reading: 'えきちか', meaning: '靠近車站' },
       { word: '内見', reading: 'ないけん', meaning: '看房' },
       { word: '電気', reading: 'でんき', meaning: '電力' },
@@ -78,17 +78,16 @@ const essentialWords = {
   },
   '便利商店': {
     tips: [
-      '塑膠袋需付費（3-5日圓）',
-      '可以繳水電瓦斯費、購買車票等',
-      '可以影印、列印住民票'
-
+      '可以繳水電瓦斯費等費用',
+      '可以影印、列印住民票',
+      '7-11結帳時需自行點選櫃檯機器上付款方式（現金、信用卡、電子支付）等，在進行結帳'
     ],
     words: [
-      { word: 'おにぎり', reading: 'おにぎり', meaning: '飯糰' },
       { word: 'レジ', reading: 'れじ', meaning: '收銀台' },
       { word: 'レシート', reading: 'れしーと', meaning: '收據' },
       { word: '袋', reading: 'ふくろ', meaning: '袋子' },
-      { word: 'お箸', reading: 'おはし', meaning: '筷子' },
+      { word: 'おしぼり', reading: 'おしぼり', meaning: '濕紙巾' },
+       { word: 'お箸', reading: 'おはし', meaning: '筷子' },
       { word: 'スプーン', reading: 'すぷーん', meaning: '湯匙' },
       { word: '温める', reading: 'あたためる', meaning: '加熱' },
       { word: '住民票の写し', reading: 'じゅうみんひょうのうつし', meaning: '住民票影本' },
@@ -101,7 +100,7 @@ const essentialWords = {
     phrases: [
       '温めてください - 請幫我加熱',
       '袋はいりません - 不用袋子',
-      'お箸をください - 請給我筷子',
+      'お箸/おしぼりをください - 請給我筷子/濕紙巾',
       'クレジットカードでお願いします - 我要用信用卡付款',
       'Suicaで払います - 用Suica支付',
       '住民票を印刷したいです - 我想列印住民票'
@@ -110,38 +109,38 @@ const essentialWords = {
   '餐廳點餐': {
     tips: [
       '日本餐廳通常都是提供冰水，冰水的日文是「おひや」ㄝ，可以說「おひやください」',
+      '有些餐廳（例如拉麵店），要先在點餐機購買餐券再入座'
     ],
     words: [
       { word: 'メニュー', reading: 'メニュー', meaning: '菜單' },
       { word: '注文', reading: 'ちゅうもん', meaning: '點餐' },
       { word: '定食', reading: 'ていしょく', meaning: '定食' },
-      { word: '天ぷら', reading: 'てんぷら', meaning: '天婦羅' },
-      { word: 'お水', reading: 'おみず', meaning: '水' },
+      { word: '麺の固さ', reading: 'メンのかたさ', meaning: '麵的硬度' },
+      { word: 'カタ麺', reading: 'かためん', meaning: '硬麵' },
+      { word: 'お冷や', reading: 'おひや', meaning: '冰水' },
       { word: 'お会計', reading: 'おかいけい', meaning: '結帳' },
       { word: '現金', reading: 'げんきん', meaning: '現金' },
       { word: 'クレジットカード', reading: 'クレジットカード', meaning: '信用卡' },
     ],
     phrases: [
-      'これをお願いします - 請給我這個',
+      'すみません、注文いいですか - 不好意思，我要點餐',
+      '麺の固さはどうしますか - 麵條要什麼樣的硬度？',
+      'カタ麺/普通にしてください - 請給我硬麵/普通硬度的麵',
       'お会計お願いします - 請結帳',
       'カードで払えますか - 可以用卡付款嗎？',
     ]
   },
-  '交通出行': {
-    icon: '🚇',
+  '交通': {
     tips: [
-      '💳 買IC卡（Suica/Pasmo）最方便，可搭所有交通工具',
-      '📱 推薦使用 Google Maps 或 Hyperdia 查詢路線',
-      '🚄 注意普通車、急行、特急的差別和費用',
-      '⏰ 末班車通常在午夜前，計畫好回程時間'
+      '手機版Suica/Icoca的可以用台灣的信用卡進行除值',
+      '特急列車需同時購買乘車券和座位券',
+      '公車完全停止後才可以走動及下車',
+      '公車上也能儲值交通卡，可以說「チャージをお願いします。」'
     ],
     words: [
-      { word: '電車', reading: 'でんしゃ', meaning: '電車' },
-      { word: '地下鉄', reading: 'ちかてつ', meaning: '地下鐵' },
-      { word: 'バス', reading: 'バス', meaning: '公車' },
-      { word: 'タクシー', reading: 'タクシー', meaning: '計程車' },
+      {word: 'チャージ', reading: 'ちゃーじ', meaning: '儲値'},
       { word: '切符', reading: 'きっぷ', meaning: '車票' },
-      { word: 'ICカード', reading: 'アイシーカード', meaning: 'IC卡' },
+      { word: 'ICカード', reading: 'アイシーカード', meaning: 'IC卡/交通卡' },
       { word: '乗り換え', reading: 'のりかえ', meaning: '轉乘' },
       { word: '改札', reading: 'かいさつ', meaning: '檢票口' },
       { word: 'ホーム', reading: 'ホーム', meaning: '月台' },
@@ -151,30 +150,22 @@ const essentialWords = {
     ],
     phrases: [
       'すみません、どこで乗り換えですか - 不好意思，在哪裡轉車？',
-      '〇〇駅はどこですか - 〇〇車站在哪裡？',
-      'いくらですか - 多少錢？',
+      'チャージをお願いします - 請幫我儲值'
     ]
   },
   '醫療看病': {
-    icon: '🏥',
     tips: [
-      '🏥 有國民健康保險，自付額只需30%',
-      '📞 預約制醫院較多，建議先打電話',
-      '💊 處方藥需到藥局拿，不是在醫院領',
-      '🌙 緊急情況可撥打119叫救護車'
+      '有國民健康保險，自付額只需30%',
+      '預約制醫院較多，建議先打電話'
     ],
     words: [
-      { word: '病院', reading: 'びょういん', meaning: '醫院' },
-      { word: '医者', reading: 'いしゃ', meaning: '醫生' },
-      { word: '薬局', reading: 'やっきょく', meaning: '藥局' },
       { word: '薬', reading: 'くすり', meaning: '藥' },
       { word: '診察', reading: 'しんさつ', meaning: '診察' },
-      { word: '予約', reading: 'よやく', meaning: '預約' },
       { word: '保険証', reading: 'ほけんしょう', meaning: '保險證' },
       { word: '症状', reading: 'しょうじょう', meaning: '症狀' },
       { word: '熱', reading: 'ねつ', meaning: '發燒' },
       { word: '頭痛', reading: 'ずつう', meaning: '頭痛' },
-      { word: '風邪', reading: 'かぜ', meaning: '感冒' },
+      { word: '咳', reading: 'せき', meaning: '咳嗽' },
       { word: '受付', reading: 'うけつけ', meaning: '櫃檯' },
     ],
     phrases: [

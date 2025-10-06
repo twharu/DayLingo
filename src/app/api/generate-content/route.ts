@@ -5,61 +5,81 @@ import { checkRateLimit } from '@/lib/rateLimiter';
 
 // 新聞搜尋功能已移除，根據用戶要求不再生成新聞內容
 
-// 測試模式的模擬內容 (N2程度，完整詞組格式，ruby標記)
+// 測試模式的模擬內容 (新格式：12個單字 + 6個自然詞組 + 4句對話)
 function generateMockContent(task: string) {
-  return `## 重要詞組
+  return `## 關聯單字
 
-1. <ruby>商品<rt>しょうひん</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぶ - 選擇商品
-例句：<ruby>品質<rt>ひんしつ</rt></ruby>の<ruby>良<rt>よ</rt></ruby>い<ruby>商品<rt>しょうひん</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぶのは<ruby>大切<rt>たいせつ</rt></ruby>だ。 - 選擇品質好的商品很重要。
+1. <ruby>商品<rt>しょうひん</rt></ruby> - 商品
+例句：この<ruby>商品<rt>しょうひん</rt></ruby>は<ruby>人気<rt>にんき</rt></ruby>があります。 - 這個商品很受歡迎。
 
-2. <ruby>値段<rt>ねだん</rt></ruby>を<ruby>確認<rt>かくにん</rt></ruby>する - 確認價格
-例句：<ruby>購入<rt>こうにゅう</rt></ruby><ruby>前<rt>まえ</rt></ruby>に<ruby>必<rt>かなら</rt></ruby>ず<ruby>値段<rt>ねだん</rt></ruby>を<ruby>確認<rt>かくにん</rt></ruby>する。 - 購買前一定要確認價格。
+2. <ruby>店員<rt>てんいん</rt></ruby> - 店員
+例句：<ruby>店員<rt>てんいん</rt></ruby>さんが<ruby>親切<rt>しんせつ</rt></ruby>でした。 - 店員很親切。
 
-3. <ruby>店員<rt>てんいん</rt></ruby>に<ruby>聞<rt>き</rt></ruby>く - 詢問店員
-例句：わからないことがあったら<ruby>店員<rt>てんいん</rt></ruby>に<ruby>聞<rt>き</rt></ruby>いてみよう。 - 有不懂的事情就問店員吧。
+3. <ruby>値段<rt>ねだん</rt></ruby> - 價格
+例句：<ruby>値段<rt>ねだん</rt></ruby>が<ruby>安<rt>やす</rt></ruby>いです。 - 價格便宜。
 
-4. <ruby>買<rt>か</rt></ruby>い<ruby>物<rt>もの</rt></ruby>をする - 購物
-例句：<ruby>週末<rt>しゅうまつ</rt></ruby>に<ruby>近所<rt>きんじょ</rt></ruby>のスーパーで<ruby>買<rt>か</rt></ruby>い<ruby>物<rt>もの</rt></ruby>をする。 - 週末在附近的超市購物。
+4. <ruby>袋<rt>ふくろ</rt></ruby> - 袋子
+例句：<ruby>袋<rt>ふくろ</rt></ruby>をください。 - 請給我袋子。
 
-5. <ruby>袋<rt>ふくろ</rt></ruby>をもらう - 拿袋子
-例句：エコバッグを<ruby>忘<rt>わす</rt></ruby>れたので<ruby>袋<rt>ふくろ</rt></ruby>をもらった。 - 忘記帶環保袋所以拿了袋子。
+5. <ruby>領収書<rt>りょうしゅうしょ</rt></ruby> - 收據
+例句：<ruby>領収書<rt>りょうしゅうしょ</rt></ruby>をもらいました。 - 拿到了收據。
 
-6. <ruby>商品<rt>しょうひん</rt></ruby>を<ruby>比較<rt>ひかく</rt></ruby>する - 比較商品
-例句：<ruby>同<rt>おな</rt></ruby>じような<ruby>商品<rt>しょうひん</rt></ruby>を<ruby>比較<rt>ひかく</rt></ruby>してから<ruby>決<rt>き</rt></ruby>める。 - 比較類似商品後再決定。
+6. <ruby>会計<rt>かいけい</rt></ruby> - 結帳
+例句：<ruby>会計<rt>かいけい</rt></ruby>をお<ruby>願<rt>ねが</rt></ruby>いします。 - 麻煩結帳。
 
-7. <ruby>領収書<rt>りょうしゅうしょ</rt></ruby>をもらう - 拿收據
-例句：<ruby>経費<rt>けいひ</rt></ruby>のため<ruby>領収書<rt>りょうしゅうしょ</rt></ruby>をもらった。 - 為了報帳拿了收據。
+7. <ruby>割引<rt>わりびき</rt></ruby> - 折扣
+例句：<ruby>割引<rt>わりびき</rt></ruby>がありますか。 - 有折扣嗎？
 
-8. <ruby>商品<rt>しょうひん</rt></ruby>を<ruby>返品<rt>へんぴん</rt></ruby>する - 退貨商品
-例句：<ruby>不良品<rt>ふりょうひん</rt></ruby>だったので<ruby>商品<rt>しょうひん</rt></ruby>を<ruby>返品<rt>へんぴん</rt></ruby>した。 - 因為是不良品所以退了貨。
+8. <ruby>現金<rt>げんきん</rt></ruby> - 現金
+例句：<ruby>現金<rt>げんきん</rt></ruby>で<ruby>払<rt>はら</rt></ruby>います。 - 用現金付款。
 
-9. カードで<ruby>支払<rt>しはら</rt></ruby>う - 用卡片付款
-例句：カードで<ruby>支払<rt>しはら</rt></ruby>いを<ruby>完了<rt>かんりょう</rt></ruby>した。 - 用卡片完成了付款。
+9. <ruby>品質<rt>ひんしつ</rt></ruby> - 品質
+例句：<ruby>品質<rt>ひんしつ</rt></ruby>が<ruby>良<rt>よ</rt></ruby>い。 - 品質很好。
 
-10. <ruby>場所<rt>ばしょ</rt></ruby>を<ruby>聞<rt>き</rt></ruby>く - 詢問位置
-例句：シャンプーの<ruby>場所<rt>ばしょ</rt></ruby>を<ruby>店員<rt>てんいん</rt></ruby>に<ruby>聞<rt>き</rt></ruby>いた。 - 向店員詢問洗髮精的位置。
+10. <ruby>在庫<rt>ざいこ</rt></ruby> - 庫存
+例句：<ruby>在庫<rt>ざいこ</rt></ruby>を<ruby>確認<rt>かくにん</rt></ruby>します。 - 確認庫存。
+
+11. <ruby>試着<rt>しちゃく</rt></ruby> - 試穿
+例句：<ruby>試着<rt>しちゃく</rt></ruby>してもいいですか。 - 可以試穿嗎？
+
+12. <ruby>交換<rt>こうかん</rt></ruby> - 換貨
+例句：<ruby>交換<rt>こうかん</rt></ruby>できますか。 - 可以換貨嗎？
+
+## 常用詞組
+
+1. <ruby>洗剤<rt>せんざい</rt></ruby>はどこにありますか - 洗潔精在哪裡
+例句：すみません、<ruby>洗剤<rt>せんざい</rt></ruby>はどこにありますか。 - 不好意思，洗潔精在哪裡？
+
+2. <ruby>重曹<rt>じゅうそう</rt></ruby>を<ruby>探<rt>さが</rt></ruby>しています - 在找小蘇打
+例句：<ruby>重曹<rt>じゅうそう</rt></ruby>を<ruby>探<rt>さが</rt></ruby>していますが、<ruby>見<rt>み</rt></ruby>つかりません。 - 在找小蘇打，但找不到。
+
+3. この<ruby>商品<rt>しょうひん</rt></ruby>の<ruby>使<rt>つか</rt></ruby>い<ruby>方<rt>かた</rt></ruby>を<ruby>教<rt>おし</rt></ruby>えてください - 請教我這個商品的用法
+例句：すみません、この<ruby>商品<rt>しょうひん</rt></ruby>の<ruby>使<rt>つか</rt></ruby>い<ruby>方<rt>かた</rt></ruby>を<ruby>教<rt>おし</rt></ruby>えてください。 - 不好意思，請教我這個商品的用法。
+
+4. もっと<ruby>大<rt>おお</rt></ruby>きいサイズはありますか - 有更大的尺寸嗎
+例句：もっと<ruby>大<rt>おお</rt></ruby>きいサイズはありますか。 - 有更大的尺寸嗎？
+
+5. <ruby>在庫<rt>ざいこ</rt></ruby>を<ruby>確認<rt>かくにん</rt></ruby>していただけますか - 可以幫我確認庫存嗎
+例句：こちらの<ruby>在庫<rt>ざいこ</rt></ruby>を<ruby>確認<rt>かくにん</rt></ruby>していただけますか。 - 可以幫我確認這個的庫存嗎？
+
+6. <ruby>別<rt>べつ</rt></ruby>の<ruby>色<rt>いろ</rt></ruby>もありますか - 還有其他顏色嗎
+例句：<ruby>別<rt>べつ</rt></ruby>の<ruby>色<rt>いろ</rt></ruby>もありますか。 - 還有其他顏色嗎？
 
 ## 日常對話
 
-A: あの、シャンプーってどこにありますか？
+A: あの、シャンプーってどこにありますか。
 不好意思，洗髮精在哪裡？
 
-B: あっ、3<ruby>階<rt>かい</rt></ruby>の<ruby>日用品<rt>にちようひん</rt></ruby>コーナーですね。エレベーターで<ruby>上<rt>あ</rt></ruby>がってすぐ<ruby>左<rt>ひだり</rt></ruby>です。
-啊，在3樓的日用品區。搭電梯上去馬上左轉就是。
+B: 3<ruby>階<rt>かい</rt></ruby>の<ruby>日用品<rt>にちようひん</rt></ruby>コーナーですよ。
+在3樓的日用品區喔。
 
-A: ありがとうございます！あと、この<ruby>商品<rt>しょうひん</rt></ruby>いくらでしたっけ？
-謝謝！還有，這個商品多少錢？
+A: ありがとうございます。この<ruby>商品<rt>しょうひん</rt></ruby>いくらですか。
+謝謝。這個商品多少錢？
 
-B: えーっと、こちらは380<ruby>円<rt>えん</rt></ruby>になります。<ruby>今<rt>いま</rt></ruby>セール<ruby>中<rt>ちゅう</rt></ruby>なんですよ。
-呃，這個是380日圓。現在正在特價中。
+B: こちらは380<ruby>円<rt>えん</rt></ruby>です。<ruby>今<rt>いま</rt></ruby>セール<ruby>中<rt>ちゅう</rt></ruby>なんですよ。
+這個是380日圓。現在正在特價中喔。
 
-A: お<ruby>得<rt>とく</rt></ruby>ですね！じゃあこれください。<ruby>現金<rt>げんきん</rt></ruby>で。
-很划算呢！那我要這個。用現金。
-
-B: ありがとうございます。<ruby>袋<rt>ふくろ</rt></ruby>はいかがしますか？
-謝謝。袋子要怎麼辦？
-
-*🤖 此為測試模式生成的內容*`;
+***此為測試模式生成的內容***`;
 }
 
 export async function POST(request: NextRequest) {

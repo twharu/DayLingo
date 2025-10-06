@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -14,7 +14,6 @@ interface UserRegistrationProps {
 export default function UserRegistration({ isOpen, onComplete, onClose }: UserRegistrationProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -93,11 +92,8 @@ export default function UserRegistration({ isOpen, onComplete, onClose }: UserRe
               <span className="text-2xl">👋</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              歡迎使用日語學習 APP！
+              歡迎使用DayLingo！
             </h2>
-            <p className="text-gray-600">
-              讓我們開始您的日語學習旅程
-            </p>
           </div>
 
           {error && (
@@ -121,8 +117,8 @@ export default function UserRegistration({ isOpen, onComplete, onClose }: UserRe
           </button>
 
           <p className="text-xs text-gray-500 mt-6">
-            登入即表示您同意我們的服務條款和隱私政策<br />
-            您的學習進度將保存到雲端
+            登入即表示您同意服務條款和隱私政策<br />
+            學習數據將保存到雲端，並且用於研究論文。
           </p>
         </div>
       </div>

@@ -70,7 +70,7 @@ export default function HamburgerMenu({ currentPath, onClearContent, hasContent 
 
             {/* 使用者資訊區塊 */}
             <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
-              <div className="text-center">
+              <div>
                 <p className="text-sm text-gray-600 mb-1">{getGreeting()}</p>
                 <p className="text-lg font-bold text-gray-800">{userName}</p>
               </div>

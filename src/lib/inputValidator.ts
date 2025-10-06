@@ -146,7 +146,7 @@ export const validateTaskName = (taskName: string): ValidationResult => {
   if (!sanitized) {
     return {
       isValid: false,
-      error: '任務名稱不能為空'
+      error: '待辦事項不能為空'
     };
   }
 
@@ -154,7 +154,7 @@ export const validateTaskName = (taskName: string): ValidationResult => {
   if (sanitized.length < 1 || sanitized.length > 100) {
     return {
       isValid: false,
-      error: '任務名稱長度必須在 1-100 字元之間'
+      error: '待辦事項長度必須在 1-100 字元之間'
     };
   }
 
@@ -162,7 +162,7 @@ export const validateTaskName = (taskName: string): ValidationResult => {
   if (hasDangerousTags(sanitized)) {
     return {
       isValid: false,
-      error: '任務名稱包含不允許的內容'
+      error: '包含不允許的內容'
     };
   }
 
@@ -170,7 +170,7 @@ export const validateTaskName = (taskName: string): ValidationResult => {
   if (hasSQLInjection(sanitized)) {
     return {
       isValid: false,
-      error: '任務名稱格式不正確'
+      error: '格式不正確'
     };
   }
 
@@ -178,7 +178,7 @@ export const validateTaskName = (taskName: string): ValidationResult => {
   if (isGibberish(sanitized)) {
     return {
       isValid: false,
-      error: '請輸入有效的任務名稱'
+      error: '請輸入有效的文字'
     };
   }
 
@@ -199,7 +199,7 @@ export const validateTaskDescription = (description: string): ValidationResult =
   if (!sanitized) {
     return {
       isValid: false,
-      error: '任務描述不能為空'
+      error: '待辦事項描述不能為空'
     };
   }
 
@@ -207,14 +207,14 @@ export const validateTaskDescription = (description: string): ValidationResult =
   if (sanitized.length < 5) {
     return {
       isValid: false,
-      error: '任務描述至少需要 5 個字元'
+      error: '待辦事項描述至少需要 5 個字元'
     };
   }
 
   if (sanitized.length > 100) {
     return {
       isValid: false,
-      error: '任務描述不能超過 100 字元'
+      error: '待辦事項描述不能超過 100 字元'
     };
   }
 
@@ -222,7 +222,7 @@ export const validateTaskDescription = (description: string): ValidationResult =
   if (hasDangerousTags(sanitized)) {
     return {
       isValid: false,
-      error: '任務描述包含不允許的內容'
+      error: '待辦事項描述包含不允許的內容'
     };
   }
 
@@ -230,7 +230,7 @@ export const validateTaskDescription = (description: string): ValidationResult =
   if (hasSQLInjection(sanitized)) {
     return {
       isValid: false,
-      error: '任務描述格式不正確'
+      error: '待辦事項描述格式不正確'
     };
   }
 
@@ -238,7 +238,7 @@ export const validateTaskDescription = (description: string): ValidationResult =
   if (isGibberish(sanitized)) {
     return {
       isValid: false,
-      error: '請輸入有效的任務描述'
+      error: '請輸入有效的文字'
     };
   }
 
@@ -257,7 +257,7 @@ export const validateCategory = (category: string, allowedCategories: string[]):
   if (!sanitized) {
     return {
       isValid: false,
-      error: '請選擇任務分類'
+      error: '請選擇待辦事項分類'
     };
   }
 
@@ -265,7 +265,7 @@ export const validateCategory = (category: string, allowedCategories: string[]):
   if (!allowedCategories.includes(sanitized)) {
     return {
       isValid: false,
-      error: '請選擇有效的任務分類'
+      error: '請選擇有效的待辦事項分類'
     };
   }
 

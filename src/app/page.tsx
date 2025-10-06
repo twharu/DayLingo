@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
@@ -31,8 +31,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState<{content: string} | null>(null);
   const [parsedWords, setParsedWords] = useState<{word: string, reading: string, meaning: string, example: string, exampleTranslation: string}[]>([]);
+  const [parsedPhrases, setParsedPhrases] = useState<{word: string, reading: string, meaning: string, example: string, exampleTranslation: string}[]>([]);
   const [savingWords, setSavingWords] = useState<Set<number>>(new Set());
   const [savedWords, setSavedWords] = useState<Set<number>>(new Set());
+  const [savingPhrases, setSavingPhrases] = useState<Set<number>>(new Set());
+  const [savedPhrases, setSavedPhrases] = useState<Set<number>>(new Set());
   const contentRef = useRef<HTMLDivElement>(null);
   const sessionRecorded = useRef<boolean>(false);
   const [showSurvey, setShowSurvey] = useState(false);
@@ -40,6 +43,7 @@ export default function Home() {
   const [showUserRegistration, setShowUserRegistration] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
+  const [selectedPhraseIndex, setSelectedPhraseIndex] = useState<number | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [voiceUsageCount, setVoiceUsageCount] = useState(0);
   const [showPostSurvey, setShowPostSurvey] = useState(false);
@@ -79,35 +83,49 @@ export default function Home() {
     try {
       // 先檢查 localStorage 緩存
       const cachedStatus = localStorage.getItem('surveyCompleted');
+      console.log('[Survey Check] userId:', userId);
+      console.log('[Survey Check] localStorage surveyCompleted:', cachedStatus);
+
       if (cachedStatus === 'true') {
+        console.log('[Survey Check] Using cached status - survey already completed');
         checkFirstVisit();
         return;
       }
 
       // 查詢 Firebase 是否有該用戶的問卷記錄
+      console.log('[Survey Check] Querying Firebase for userId:', userId);
       const q = query(
         collection(db, 'surveyResponses'),
         where('userId', '==', userId)
       );
       const querySnapshot = await getDocs(q);
+      console.log('[Survey Check] Firebase query result - empty?', querySnapshot.empty, 'size:', querySnapshot.size);
 
       if (!querySnapshot.empty) {
-        // 用戶已填寫過問卷，更新緩存
+        // 用戶已填寫過問卷，更新緩存並直接啟動導覽
+        console.log('[Survey Check] Found survey response in Firebase, updating cache');
+        querySnapshot.forEach(doc => {
+          console.log('[Survey Check] Survey document:', doc.id, doc.data());
+        });
         localStorage.setItem('surveyCompleted', 'true');
+        // 直接啟動導覽，不顯示問卷
         checkFirstVisit();
       } else {
         // 用戶未填寫問卷，顯示問卷彈窗
+        console.log('[Survey Check] No survey found - showing survey modal');
         setTimeout(() => {
           setShowSurvey(true);
         }, 1000);
       }
     } catch (error) {
-      console.error('檢查問卷狀態失敗:', error);
+      console.error('[Survey Check] Error checking survey status:', error);
       // 發生錯誤時，檢查 localStorage
       const cachedStatus = localStorage.getItem('surveyCompleted');
       if (cachedStatus === 'true') {
+        console.log('[Survey Check] Error occurred but using cached status');
         checkFirstVisit();
       } else {
+        console.log('[Survey Check] Error occurred and no cache - showing survey');
         setTimeout(() => {
           setShowSurvey(true);
         }, 1000);
@@ -133,9 +151,9 @@ export default function Home() {
       // 檢查是否已經檢查過使用次數
       const lastCheckTime = localStorage.getItem(`lastUsageCheck_${userId}`);
       const now = Date.now();
-      
-      // 如果 5 分鐘內已檢查過，跳過
-      if (lastCheckTime && (now - parseInt(lastCheckTime)) < 5 * 60 * 1000) {
+
+      // 如果 1 小時內已檢查過，跳過
+      if (lastCheckTime && (now - parseInt(lastCheckTime)) < 60 * 60 * 1000) {
         return;
       }
       
@@ -193,27 +211,35 @@ export default function Home() {
 
   const parseWords = (content: string) => {
     const words = [];
+    const phrases = [];
     const lines = content.split('\n');
-    let inWordsSection = false;
-    
+    let currentSection = '';
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      
-      if (line.includes('重要詞組') || line.includes('## 重要詞組')) {
-        inWordsSection = true;
+
+      // 檢查區塊標題
+      if (line.includes('關聯單字') || line.includes('## 關聯單字')) {
+        currentSection = 'words';
         continue;
       }
-      
+
+      if (line.includes('常用詞組') || line.includes('## 常用詞組')) {
+        currentSection = 'phrases';
+        continue;
+      }
+
       if (line.includes('## 日常對話')) {
-        inWordsSection = false;
+        currentSection = '';
         continue;
       }
-      
-      if (inWordsSection && line.match(/^\d+\./)) {
+
+      // 解析單字或詞組
+      if ((currentSection === 'words' || currentSection === 'phrases') && line.match(/^\d+\./)) {
         // 移除數字編號
         const cleanLine = line.replace(/^\d+\.\s*/, '');
         const wordMatch = cleanLine.match(/^(.+?)\s*-\s*(.+)$/);
-        
+
         if (wordMatch) {
           const [, wordWithRuby, meaning] = wordMatch;
 
@@ -227,7 +253,7 @@ export default function Home() {
           let word = wordWithRuby.replace(/<ruby>([^<]+)<rt>[^<]+<\/rt><\/ruby>/g, '$1');
           // 清理可能遺留的 HTML 標籤
           word = word.replace(/<[^>]*>/g, '');
-          
+
           // 找例句
           let example = '';
           let exampleTranslation = '';
@@ -239,45 +265,55 @@ export default function Home() {
               exampleTranslation = exampleMatch[2].trim();
             }
           }
-          
+
+          const item = {
+            word: word.trim(),
+            reading: reading.trim(),
+            meaning: meaning.trim(),
+            example,
+            exampleTranslation
+          };
+
           if (word && reading && meaning) {
-            words.push({
-              word: word.trim(),
-              reading: reading.trim(),
-              meaning: meaning.trim(),
-              example,
-              exampleTranslation
-            });
+            if (currentSection === 'words') {
+              words.push(item);
+            } else if (currentSection === 'phrases') {
+              phrases.push(item);
+            }
           }
         }
       }
     }
-    
+
     setParsedWords(words);
+    setParsedPhrases(phrases);
   };
 
   const filterContent = (content: string) => {
-    // 移除重要詞組部分，只保留日常對話和相關新聞
+    // 移除關聯單字和常用詞組部分，只保留日常對話
     const lines = content.split('\n');
     const filteredLines = [];
     let skipSection = false;
-    
+
     for (const line of lines) {
-      if (line.includes('## 重要詞組')) {
+      // 檢查是否進入要跳過的區塊
+      if (line.includes('## 關聯單字') || line.includes('## 常用詞組') || line.includes('## 重要詞組')) {
         skipSection = true;
         continue;
       }
-      
+
+      // 檢查是否到達日常對話
       if (line.includes('## 日常對話')) {
         skipSection = false;
         continue; // 跳過這個標題行
       }
-      
+
+      // 只保留不在跳過區塊中的內容
       if (!skipSection) {
         filteredLines.push(line);
       }
     }
-    
+
     return filteredLines.join('\n').trim();
   };
 
@@ -307,6 +343,36 @@ export default function Home() {
     setSavingWords(prev => {
       const newSet = new Set(prev);
       newSet.delete(wordIndex);
+      return newSet;
+    });
+  };
+
+  const savePhrase = async (phraseIndex: number) => {
+    const phrase = parsedPhrases[phraseIndex];
+    if (!phrase) return;
+
+    setSavingPhrases(prev => new Set(prev).add(phraseIndex));
+
+    try {
+      await addDoc(collection(db, 'savedWords'), {
+        word: phrase.word,
+        reading: phrase.reading,
+        meaning: phrase.meaning,
+        example: phrase.example,
+        exampleTranslation: phrase.exampleTranslation,
+        category: selectedCategory,
+        savedAt: new Date().toISOString()
+      });
+
+      setSavedPhrases(prev => new Set(prev).add(phraseIndex));
+    } catch (error) {
+      console.error('儲存詞組失敗:', error);
+      alert('儲存失敗，請稍後再試');
+    }
+
+    setSavingPhrases(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(phraseIndex);
       return newSet;
     });
   };
@@ -634,20 +700,13 @@ export default function Home() {
     setLoading(false);
   };
 
-  const handleUserRegistrationComplete = (newUserId: string) => {
+  const handleUserRegistrationComplete = useCallback((newUserId: string) => {
     setUserId(newUserId);
     setShowUserRegistration(false);
-    
-    // 用戶註冊完成後，檢查問卷狀態
-    const surveyCompleted = localStorage.getItem('surveyCompleted');
-    if (!surveyCompleted) {
-      setTimeout(() => {
-        setShowSurvey(true);
-      }, 1000);
-    } else {
-      checkFirstVisit();
-    }
-  };
+
+    // 用戶註冊完成後，檢查 Firebase 問卷狀態（不只看 localStorage）
+    checkSurveyStatus(newUserId);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
@@ -677,6 +736,11 @@ export default function Home() {
         }}
         onClose={() => {
           setShowSurvey(false);
+          // 即使關閉問卷，也要檢查是否已填寫過（從 Firebase 查到的）
+          const surveyCompleted = localStorage.getItem('surveyCompleted');
+          if (surveyCompleted === 'true') {
+            checkFirstVisit();
+          }
         }}
       />
 
@@ -718,7 +782,7 @@ export default function Home() {
               }}
               className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              開始學習日語
+              開始學習
             </button>
           </div>
         </div>
@@ -761,17 +825,17 @@ export default function Home() {
                   setSelectedDate(getTodayDate());
                   setIsTaskDrawerOpen(true);
                 }}
-                title="建立新代辦事項"
+                title="建立待辦事項"
               >
                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
               </button>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                輸入今天的第一個代辦事項吧！
+                輸入今天的第一個待辦事項吧！
               </h3>
               <p className="text-gray-600 mb-6">
-                點擊下方按鈕或日曆上的日期來創建你的第一個學習任務
+                點擊下方按鈕或日曆上的日期
               </p>
               <button
                 id="create-task-button"
@@ -784,7 +848,7 @@ export default function Home() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                <span>建立第一個代辦事項</span>
+                <span>建立待辦事項</span>
               </button>
             </div>
           </div>
@@ -801,60 +865,122 @@ export default function Home() {
 
         {content && (
           <div ref={contentRef} className="space-y-6">
-            {/* 單字收藏區域 */}
+            {/* 關聯單字區域 */}
             {parsedWords.length > 0 && (
               <div className="bg-white rounded-lg shadow-lg p-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">關聯詞彙</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">關聯單字</h2>
                   <p className="text-gray-500 text-sm">
-                    點擊單字可以查看例句和詳細資訊
+                    點擊單字查看例句
                   </p>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-3">
                   {parsedWords.map((word, index) => (
-                    <div 
-                      key={index} 
-                      className="border border-gray-200 rounded-lg p-3 md:p-4 hover:border-blue-300 transition-colors cursor-pointer min-h-[120px] md:min-h-[140px] flex items-center justify-center"
+                    <div
+                      key={index}
+                      className="border border-gray-200 rounded-lg p-2 md:p-3 hover:border-blue-300 transition-colors cursor-pointer min-h-[100px] md:min-h-[120px] flex items-center justify-center"
                       onClick={() => setSelectedWordIndex(index)}
                     >
                       <div className="text-center w-full">
-                        <p className="text-blue-600 font-medium mb-2 flex items-center justify-center text-sm">
+                        <p className="text-blue-600 font-medium mb-1 flex items-center justify-center">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               playSound(word.reading);
                             }}
-                            className="mr-1 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
+                            className="mr-1 hover:scale-110 transition-transform p-0.5 rounded-full hover:bg-blue-100"
                             title="播放讀音"
                           >
-                            <Image 
-                              src="/icons/volume.svg" 
-                              alt="播放讀音" 
-                              width={14} 
-                              height={14}
+                            <Image
+                              src="/icons/volume.svg"
+                              alt="播放讀音"
+                              width={12}
+                              height={12}
                             />
                           </button>
-                          <span className="text-xs md:text-sm">{word.reading}</span>
+                          <span className="text-xs">{word.reading}</span>
                         </p>
-                        <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 mb-2 md:mb-3">
+                        <h3 className="text-base md:text-lg font-bold text-gray-800 mb-1 md:mb-2">
                           {word.word}
                         </h3>
-                        <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-2">{word.meaning}</p>
+                        <p className="text-xs text-gray-600 mb-1 md:mb-2 line-clamp-2">{word.meaning}</p>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             saveWord(index);
                           }}
                           disabled={savingWords.has(index) || savedWords.has(index)}
-                          className={`w-full px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors text-xs md:text-sm ${
-                            savedWords.has(index) 
-                              ? 'bg-green-600 text-white cursor-default' 
+                          className={`w-full px-2 py-1 rounded transition-colors text-xs ${
+                            savedWords.has(index)
+                              ? 'bg-green-600 text-white cursor-default'
                               : savingWords.has(index)
                                 ? 'bg-gray-400 text-white cursor-not-allowed'
                                 : 'bg-blue-600 text-white hover:bg-blue-700'
                           }`}
                         >
                           {savingWords.has(index) ? '儲存中...' : savedWords.has(index) ? '已收藏' : '收藏'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 常用詞組區域 */}
+            {parsedPhrases.length > 0 && (
+              <div className="bg-white rounded-lg shadow-lg p-8">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">常用詞組</h2>
+                  <p className="text-gray-500 text-sm">
+                    點擊詞組查看例句
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                  {parsedPhrases.map((phrase, index) => (
+                    <div
+                      key={index}
+                      className="border border-gray-200 rounded-lg p-3 md:p-4 hover:border-blue-400 transition-colors cursor-pointer min-h-[120px] md:min-h-[140px] flex items-center justify-center"
+                      onClick={() => setSelectedPhraseIndex(index)}
+                    >
+                      <div className="text-center w-full">
+                        <p className="text-blue-500 font-medium mb-2 flex items-center justify-center text-sm">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playSound(phrase.reading);
+                            }}
+                            className="mr-1 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
+                            title="播放讀音"
+                          >
+                            <Image
+                              src="/icons/volume.svg"
+                              alt="播放讀音"
+                              width={14}
+                              height={14}
+                            />
+                          </button>
+                          <span className="text-xs md:text-sm">{phrase.reading}</span>
+                        </p>
+                        <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 mb-2 md:mb-3">
+                          {phrase.word}
+                        </h3>
+                        <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-2">{phrase.meaning}</p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            savePhrase(index);
+                          }}
+                          disabled={savingPhrases.has(index) || savedPhrases.has(index)}
+                          className={`w-full px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors text-xs md:text-sm ${
+                            savedPhrases.has(index)
+                              ? 'bg-green-600 text-white cursor-default'
+                              : savingPhrases.has(index)
+                                ? 'bg-gray-400 text-white cursor-not-allowed'
+                                : 'bg-blue-500 text-white hover:bg-blue-600'
+                          }`}
+                        >
+                          {savingPhrases.has(index) ? '儲存中...' : savedPhrases.has(index) ? '已收藏' : '收藏'}
                         </button>
                       </div>
                     </div>
@@ -963,7 +1089,104 @@ export default function Home() {
                 </div>
               </div>
             )}
-            
+
+            {/* 詞組例句彈窗 */}
+            {selectedPhraseIndex !== null && parsedPhrases[selectedPhraseIndex] && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setSelectedPhraseIndex(null)}>
+                <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                        {parsedPhrases[selectedPhraseIndex].word}
+                      </h3>
+                      <p className="text-lg text-gray-600 mb-3">{parsedPhrases[selectedPhraseIndex].meaning}</p>
+                      <p className="text-blue-500 font-medium flex items-center">
+                        <button
+                          onClick={() => playSound(parsedPhrases[selectedPhraseIndex].reading)}
+                          className="mr-2 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
+                          title="播放讀音"
+                        >
+                          <Image
+                            src="/icons/volume.svg"
+                            alt="播放讀音"
+                            width={18}
+                            height={18}
+                          />
+                        </button>
+                        {parsedPhrases[selectedPhraseIndex].reading}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedPhraseIndex(null)}
+                      className="text-gray-400 hover:text-gray-600 text-2xl"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {parsedPhrases[selectedPhraseIndex].example && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-800">例句：</h4>
+                        <button
+                          onClick={() => {
+                            let cleanExample = parsedPhrases[selectedPhraseIndex].example;
+                            cleanExample = cleanExample.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
+                            cleanExample = cleanExample.replace(/<[^>]*>/g, '');
+                            playSound(cleanExample);
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-blue-500 hover:bg-blue-100 rounded transition-colors text-sm"
+                          title="播放例句"
+                        >
+                          <Image
+                            src="/icons/volume.svg"
+                            alt="播放例句"
+                            width={16}
+                            height={16}
+                          />
+                          播放
+                        </button>
+                      </div>
+                      <p className="text-gray-800 mb-3 text-lg leading-relaxed">
+                        <span
+                          className="ruby-content"
+                          dangerouslySetInnerHTML={{ __html: parsedPhrases[selectedPhraseIndex].example }}
+                          style={{ fontSize: '18px', lineHeight: '2' }}
+                        />
+                      </p>
+                      <h4 className="font-medium text-gray-800 mb-2">翻譯：</h4>
+                      <p className="text-gray-600 text-lg">{parsedPhrases[selectedPhraseIndex].exampleTranslation}</p>
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex gap-3">
+                    <button
+                      onClick={() => {
+                        savePhrase(selectedPhraseIndex);
+                        setSelectedPhraseIndex(null);
+                      }}
+                      disabled={savingPhrases.has(selectedPhraseIndex) || savedPhrases.has(selectedPhraseIndex)}
+                      className={`flex-1 px-4 py-3 rounded-lg transition-colors ${
+                        savedPhrases.has(selectedPhraseIndex)
+                          ? 'bg-green-600 text-white cursor-default'
+                          : savingPhrases.has(selectedPhraseIndex)
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                      }`}
+                    >
+                      {savingPhrases.has(selectedPhraseIndex) ? '儲存中...' : savedPhrases.has(selectedPhraseIndex) ? '已收藏' : '收藏這個詞組'}
+                    </button>
+                    <button
+                      onClick={() => setSelectedPhraseIndex(null)}
+                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      關閉
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 完整內容顯示 */}
             <div className="bg-white rounded-lg shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">對話例</h2>
