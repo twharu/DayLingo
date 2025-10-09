@@ -223,7 +223,7 @@ export default function VocabularyPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
       <div className="max-w-4xl mx-auto">
-        <header className="py-8">
+        <header className="py-6">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">
@@ -247,7 +247,7 @@ export default function VocabularyPage() {
 
         {/* 分類選擇器 */}
         {savedWords.length > 0 && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">按分類瀏覽</h2>
             <div className="flex flex-wrap gap-2">
               <button
@@ -317,48 +317,48 @@ export default function VocabularyPage() {
                   : savedWords.filter(word => word.category === selectedCategory);
               
               return filteredWords.map((word, index) => (
-                <div key={word.id} className="bg-white rounded-lg shadow-lg p-6">
+                <div key={word.id} className="bg-white rounded-lg shadow-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center mb-3">
-                        <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full mr-3">
+                      <div className="flex items-center mb-2">
+                        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full mr-2">
                           #{index + 1}
                         </span>
                         {word.category && (
-                          <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full mr-3">
+                          <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full mr-2">
                             {word.category}
                           </span>
                         )}
                       </div>
 
-                      <div className="mb-3">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                      <div className="mb-2">
+                        <h3 className="text-xl font-bold text-gray-800 mb-1">
                           {word.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
                         </h3>
-                        <p className="text-gray-600">{word.meaning}</p>
+                        <p className="text-sm text-gray-600">{word.meaning}</p>
                       </div>
-                      
-                      <div className="mb-3">
-                        <p className="text-lg text-blue-600 font-medium flex items-center">
+
+                      <div className="mb-2">
+                        <p className="text-base text-blue-600 font-medium flex items-center">
                           <button
                             onClick={() => playSound(word.reading)}
                             className="mr-2 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
                             title="播放讀音"
                           >
-                            <Image 
-                              src="/icons/volume.svg" 
-                              alt="播放讀音" 
-                              width={20} 
-                              height={20}
+                            <Image
+                              src="/icons/volume.svg"
+                              alt="播放讀音"
+                              width={18}
+                              height={18}
                             />
                           </button>
                           {word.reading}
                         </p>
                       </div>
 
-                      <div className="bg-gray-50 p-4 rounded-lg mb-3">
-                        <div className="flex items-start justify-between mb-2">
-                          <span className="font-medium text-gray-800">例句：</span>
+                      <div className="bg-gray-50 p-3 rounded-lg mb-2">
+                        <div className="flex items-start justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-800">例句：</span>
                           <button
                             onClick={() => {
                               // 正確處理 ruby 標籤：提取漢字部分，移除讀音標注
@@ -373,41 +373,41 @@ export default function VocabularyPage() {
                             className="flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm"
                             title="播放例句"
                           >
-                            <Image 
-                              src="/icons/volume.svg" 
-                              alt="播放例句" 
-                              width={16} 
-                              height={16}
+                            <Image
+                              src="/icons/volume.svg"
+                              alt="播放例句"
+                              width={14}
+                              height={14}
                             />
                           </button>
                         </div>
-                        <p className="text-gray-800 mb-3">
-                          <span 
+                        <p className="text-gray-800 mb-2">
+                          <span
                             className="ruby-content"
                             dangerouslySetInnerHTML={{ __html: word.example }}
-                            style={{ fontSize: '16px', lineHeight: '1.8' }}
+                            style={{ fontSize: '16px', lineHeight: '1' }}
                           />
                         </p>
-                        <p className="text-gray-600">
+                        <p className="text-sm text-gray-600">
                           {word.exampleTranslation}
                         </p>
                       </div>
 
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-gray-500">
                         收藏時間：{new Date(word.savedAt).toLocaleString('zh-TW')}
                       </p>
                     </div>
 
                     <button
                       onClick={() => deleteWord(word.id)}
-                      className="ml-4 text-red-500 hover:text-red-700 transition-colors p-2 shadow-md hover:shadow-lg rounded-lg"
+                      className="ml-3 text-red-500 hover:text-red-700 transition-colors p-1.5 shadow-md hover:shadow-lg rounded-lg"
                       title="刪除單字"
                     >
-                      <Image 
-                        src="/icons/delete.svg" 
-                        alt="刪除" 
-                        width={20} 
-                        height={20}
+                      <Image
+                        src="/icons/delete.svg"
+                        alt="刪除"
+                        width={18}
+                        height={18}
                       />
                     </button>
                   </div>

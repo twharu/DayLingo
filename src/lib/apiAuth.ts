@@ -66,6 +66,6 @@ export function getClientIP(request: NextRequest): string {
     return realIP;
   }
 
-  // 降級使用 request IP
-  return request.ip || 'unknown';
+  // 降級使用 request IP（不是所有環境都支援）
+  return 'unknown';
 }

@@ -228,13 +228,13 @@ export default function Home() {
       const line = lines[i].trim();
 
       // 檢查區塊標題
-      if (line.includes('關聯單字') || line.includes('## 關聯單字')) {
+      if (line.includes('關聯單字') || line.includes('## 關聯單字') || line.includes('### 單字列表') || line.includes('單字列表')) {
         currentSection = 'words';
         console.log('✅ 找到關聯單字區塊');
         continue;
       }
 
-      if (line.includes('## 日常對話')) {
+      if (line.includes('## 日常對話') || line.includes('### 日常對話')) {
         currentSection = '';
         console.log('✅ 找到日常對話區塊，停止解析單字');
         continue;
@@ -338,6 +338,8 @@ export default function Home() {
           if (word && reading && meaning) {
             words.push(item);
             console.log(`📌 解析到第 ${words.length} 個單字:`, word, reading, meaning);
+            console.log(`   - 對話A: ${dialogueA ? '✅' : '❌'}`);
+            console.log(`   - 對話B: ${dialogueB ? '✅' : '❌'}`);
           } else {
             console.log('⚠️ 單字解析失敗，缺少必要欄位:', { word, reading, meaning });
           }
