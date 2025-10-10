@@ -41,7 +41,7 @@ export const useTour = () => {
         element: '#hamburger-menu',
         popover: {
           title: '功能選單',
-          description: '點擊這裡可以瀏覽所有功能：新手必備、單字庫和設定通知等。',
+          description: '點擊這裡可以瀏覽所有功能：新手必備、單字庫等。',
           side: 'left',
           align: 'start'
         }
