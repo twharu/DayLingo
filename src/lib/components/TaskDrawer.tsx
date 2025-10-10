@@ -254,7 +254,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                 disabled={loading || !selectedDate || !selectedCategory || !taskName.trim() || !taskDescription.trim()}
                 className="flex-2 bg-blue-600 text-white py-4 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium text-lg transition-colors"
               >
-                {loading ? 'AI 生成學習內容中...' : '生成日語學習內容'}
+                {loading ? 'AI 生成學習內容中...' : '送出'}
               </button>
             </div>
           </form>
