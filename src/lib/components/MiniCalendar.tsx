@@ -135,7 +135,7 @@ export default function MiniCalendar({ onDateClick }: MiniCalendarProps) {
         </div>
         <div className="flex items-center space-x-1">
           <div className="w-2 h-2 bg-gray-200 rounded"></div>
-          <span>點擊日期建立任務</span>
+          <span>點擊日期輸入待辦事項</span>
         </div>
       </div>
     </div>

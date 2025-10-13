@@ -353,7 +353,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 />
                 {surveyData.otherDifficulty.trim() === '' && (
                   <p className="text-red-600 text-xs mt-1">
-                    ※ 請填寫具體說明才能繼續
+                    ※ 請填寫具體說明
                   </p>
                 )}
               </div>
@@ -411,7 +411,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 />
                 {surveyData.otherSituation.trim() === '' && (
                   <p className="text-red-600 text-xs mt-1">
-                    ※ 請填寫具體說明才能繼續
+                    ※ 請填寫具體說明
                   </p>
                 )}
               </div>
@@ -473,7 +473,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 />
                 {surveyData.otherDesired.trim() === '' && (
                   <p className="text-red-600 text-xs mt-1">
-                    ※ 請填寫具體說明才能繼續
+                    ※ 請填寫具體說明
                   </p>
                 )}
               </div>
@@ -524,7 +524,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                 />
                 {surveyData.otherLearningMethod.trim() === '' && (
                   <p className="text-red-600 text-xs mt-1">
-                    ※ 請填寫具體說明才能繼續
+                    ※ 請填寫具體說明
                   </p>
                 )}
               </div>

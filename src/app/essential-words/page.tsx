@@ -87,7 +87,7 @@ const essentialWords = {
       { word: 'レシート', reading: 'れしーと', meaning: '收據' },
       { word: '袋', reading: 'ふくろ', meaning: '袋子' },
       { word: 'おしぼり', reading: 'おしぼり', meaning: '濕紙巾' },
-       { word: 'お箸', reading: 'おはし', meaning: '筷子' },
+      { word: 'お箸', reading: 'おはし', meaning: '筷子' },
       { word: 'スプーン', reading: 'すぷーん', meaning: '湯匙' },
       { word: '温める', reading: 'あたためる', meaning: '加熱' },
       { word: '住民票の写し', reading: 'じゅうみんひょうのうつし', meaning: '住民票影本' },
@@ -138,7 +138,7 @@ const essentialWords = {
       '公車上也能儲值交通卡，可以說「チャージをお願いします。」'
     ],
     words: [
-      {word: 'チャージ', reading: 'ちゃーじ', meaning: '儲値'},
+      { word: 'チャージ', reading: 'ちゃーじ', meaning: '儲値' },
       { word: '切符', reading: 'きっぷ', meaning: '車票' },
       { word: 'ICカード', reading: 'アイシーカード', meaning: 'IC卡/交通卡' },
       { word: '乗り換え', reading: 'のりかえ', meaning: '轉乘' },
@@ -155,8 +155,9 @@ const essentialWords = {
   },
   '醫療看病': {
     tips: [
-      '有國民健康保險，自付額只需30%',
-      '預約制醫院較多，建議先打電話'
+      '需攜帶國民健康保險證，有國民健康保險，自付額只需30%',
+      '預約制診所較多，建議先打電話預約',
+      '感冒藥通常會開五天份'
     ],
     words: [
       { word: '薬', reading: 'くすり', meaning: '藥' },
@@ -167,20 +168,45 @@ const essentialWords = {
       { word: '頭痛', reading: 'ずつう', meaning: '頭痛' },
       { word: '咳', reading: 'せき', meaning: '咳嗽' },
       { word: '受付', reading: 'うけつけ', meaning: '櫃檯' },
+      { word: '喉の痛み', reading: 'のどのいたみ', meaning: '喉嚨痛' },
+      { word: '鼻水', reading: 'はなみず', meaning: '鼻水' },
+      { word: '鼻づまり', reading: 'はなづまり', meaning: '鼻塞' },
+      { word: 'くしゃみ', reading: 'くしゃみ', meaning: '打噴嚏' },
+      { word: '寒気', reading: 'さむけ', meaning: '發冷' },
+      { word: 'だるい', reading: 'だるい', meaning: '全身無力' },
+      { word: '吐き気', reading: 'はきけ', meaning: '噁心' },
+      { word: '下痢', reading: 'げり', meaning: '拉肚子' },
+      { word: '腹痛', reading: 'ふくつう', meaning: '肚子痛' },
+      { word: 'めまい', reading: 'めまい', meaning: '頭暈' },
+      { word: '痰', reading: 'たん', meaning: '痰' },
+      { word: '息苦しい', reading: 'いきぐるしい', meaning: '呼吸困難' },
+      { word: '関節痛', reading: 'かんせつつう', meaning: '關節痛' },
+      { word: '倦怠感', reading: 'けんたいかん', meaning: '倦怠感' },
+      { word: '体温計', reading: 'たいおんけい', meaning: '體溫計' },
+      { word: '診断', reading: 'しんだん', meaning: '診斷' },
+      { word: '薬局', reading: 'やっきょく', meaning: '藥局' },
+      { word: '内科', reading: 'ないか', meaning: '內科' },
+      { word: '処方箋', reading: 'しょほうせん', meaning: '處方箋' },
+      { word: 'インフルエンザ', reading: 'いんふるえんざ', meaning: '流感' },
+      { word: '検温', reading: 'けんおん', meaning: '量體溫' },
+      { word: '熱っぽい', reading: 'ねつっぽい', meaning: '覺得發燒' },
+      { word: '咽頭炎', reading: 'いんとうえん', meaning: '咽喉炎' },
+      { word: '風邪', reading: 'かぜ', meaning: '感冒' },
+      { word: '下痢', reading: 'げり', meaning: '拉肚子／腹瀉' }
+
     ],
     phrases: [
       '具合が悪いです - 我身體不舒服',
-      '予約をお願いします - 請幫我預約',
+      '熱があります - 我發燒了',
       '保険証を持っています - 我有保險證',
+      'アレルギーがあります - 我有過敏'
     ]
   },
   '銀行開戶': {
-    icon: '🏦',
     tips: [
-      '📝 需要住民票、在留卡、印章（或簽名）',
-      '🏛️ 推薦選擇住家或學校附近的銀行',
-      '📱 多數銀行有手機APP可查餘額、轉帳',
-      '💰 跨行提款會收手續費，注意使用時間'
+      '需要住民票、在留卡、印章',
+      '跨行提款及營業時間外會收手續費，注意使用時間',
+      '剛來日本時（例如持留學簽證、就職簽證剛下來的前幾個月），銀行會暫時以「非居住者」的身份開戶。在日本居住滿 6 個月後（即取得「居住者」資格），需要主動去銀行更新資料，讓帳戶改成「居住者」帳戶。'
     ],
     words: [
       { word: '銀行', reading: 'ぎんこう', meaning: '銀行' },
@@ -198,36 +224,34 @@ const essentialWords = {
     ],
     phrases: [
       '口座を開設したいです - 我想要開戶',
-      'ATMはどこですか - ATM在哪裡？',
-      '手数料はいくらですか - 手續費多少錢？',
+      '居住者の手続きをしたいです - 我想辦居住者變更手續'
     ]
   },
   '手機申辦': {
-    icon: '📱',
     tips: [
-      '📋 需要在留卡、銀行帳戶、信用卡或現金卡',
-      '💰 格安SIM（MVNO）比三大電信便宜很多',
-      '🌐 注意流量限制，無限流量方案較貴',
-      '📱 可考慮先用預付卡測試訊號品質'
+      '需要在留卡、銀行帳戶、信用卡',
+      '格安SIM（例如：LINEMO，楽天moblie，POVO）是比較熱門的選擇',
+      '注意流量限制，日本不像台灣幾乎每個電信都有網路吃到飽的方案',
     ],
     words: [
       { word: '携帯電話', reading: 'けいたいでんわ', meaning: '手機' },
       { word: 'スマホ', reading: 'スマホ', meaning: '智慧型手機' },
       { word: '契約', reading: 'けいやく', meaning: '契約' },
-      { word: 'プラン', reading: 'プラン', meaning: '方案' },
+      { word: 'プラン', reading: 'ぷらん', meaning: '方案' },
       { word: '料金', reading: 'りょうきん', meaning: '費用' },
       { word: '月額', reading: 'げつがく', meaning: '月費' },
       { word: '通話', reading: 'つうわ', meaning: '通話' },
       { word: 'データ', reading: 'でーた', meaning: '數據' },
-      { word: 'Wi-Fi', reading: 'ワイファイ', meaning: 'Wi-Fi' },
-      { word: 'SIMカード', reading: 'シムカード', meaning: 'SIM卡' },
-      { word: '機種変更', reading: 'きしゅへんこう', meaning: '換機' },
+      { word: '通信速度', reading: 'つうしんそくど', meaning: '網速' },
+      { word: 'SIMカード', reading: 'しむかーど', meaning: 'SIM卡' },
+      { word: '乗り換え', reading: 'のりかえ', meaning: '轉換門號／攜碼' },
       { word: '解約', reading: 'かいやく', meaning: '解約' },
+      { word: '違約金', reading: 'いやくきん', meaning: '違約金' },
     ],
     phrases: [
-      'プリペイドはありますか - 有預付卡嗎？',
-      '一番安いプランは何ですか - 最便宜的方案是什麼？',
-      '契約したいです - 我想要申辦',
+      'スマホを契約したいです - 我想申辦手機',
+      'このプランの料金はいくらですか - 這個方案的費用是多少？',
+      '通話し放題ですか - 通話是吃到飽嗎？',
     ]
   }
 };
@@ -239,11 +263,11 @@ export default function EssentialWords() {
   const preprocessJapaneseText = (text: string) => {
     // 針對常見的日語發音問題做預處理
     let processedText = text;
-    
+
     // 拗音處理 - 使用片假名和更強的分隔
     const youonMappings: { [key: string]: string } = {
       'しょ': 'シ　ョ',  // 使用片假名和全角空格
-      'しゅ': 'シ　ュ', 
+      'しゅ': 'シ　ュ',
       'しゃ': 'シ　ャ',
       'ちょ': 'チ　ョ',
       'ちゅ': 'チ　ュ',
@@ -273,12 +297,12 @@ export default function EssentialWords() {
       'ひゅ': 'ヒ　ュ',
       'ひゃ': 'ヒ　ャ'
     };
-    
+
     // 長音處理 - 讓長音更自然
     const choonMappings: { [key: string]: string } = {
       'とう': 'とお',
       'こう': 'こお',
-      'そう': 'そお', 
+      'そう': 'そお',
       'ろう': 'ろお',
       'どう': 'どお',
       'ぼう': 'ぼお',
@@ -286,19 +310,19 @@ export default function EssentialWords() {
       'よう': 'よお',
       'ほう': 'ほお'
     };
-    
+
     // 應用拗音處理
     Object.keys(youonMappings).forEach(key => {
       const regex = new RegExp(key, 'g');
       processedText = processedText.replace(regex, youonMappings[key]);
     });
-    
+
     // 應用長音處理
     Object.keys(choonMappings).forEach(key => {
       const regex = new RegExp(key, 'g');
       processedText = processedText.replace(regex, choonMappings[key]);
     });
-    
+
     return processedText;
   };
 
@@ -306,30 +330,30 @@ export default function EssentialWords() {
     if ('speechSynthesis' in window) {
       // 停止當前播放
       window.speechSynthesis.cancel();
-      
+
       // 預處理日語文字
       const processedText = preprocessJapaneseText(text);
       console.log('原文:', text, '處理後:', processedText);
-      
+
       const utterance = new SpeechSynthesisUtterance(processedText);
       utterance.lang = 'ja-JP'; // 設定為日語
       utterance.rate = 0.5; // 非常慢的語速，便於學習
       utterance.volume = 0.8; // 音量
       utterance.pitch = 1.0; // 語調高度 (0.1-2.0)
-      
+
       // 嘗試找到日語女聲 (優先女聲)
       const voices = window.speechSynthesis.getVoices();
-      
+
       // 按優先級排序尋找女聲
-      const femaleVoice = 
+      const femaleVoice =
         // 1. 尋找日語女聲 (包含 Female 關鍵字)
         voices.find(voice => voice.lang.includes('ja') && voice.name.includes('Female')) ||
         // 2. 尋找 Kyoko (macOS 日語女聲)
         voices.find(voice => voice.lang.includes('ja') && voice.name.includes('Kyoko')) ||
         // 3. 尋找其他常見的日語女聲名稱
         voices.find(voice => voice.lang.includes('ja') && (
-          voice.name.includes('女性') || 
-          voice.name.includes('Otoya') || 
+          voice.name.includes('女性') ||
+          voice.name.includes('Otoya') ||
           voice.name.includes('Sayaka') ||
           voice.name.includes('Haruka')
         )) ||
@@ -337,12 +361,12 @@ export default function EssentialWords() {
         voices.find(voice => voice.lang === 'ja-JP' && voice.localService) ||
         // 5. 任何日語語音
         voices.find(voice => voice.lang.includes('ja'));
-      
+
       if (femaleVoice) {
         utterance.voice = femaleVoice;
         console.log('使用語音:', femaleVoice.name, femaleVoice.lang);
       }
-      
+
       window.speechSynthesis.speak(utterance);
     } else {
       alert('您的瀏覽器不支援語音播放功能');
@@ -359,7 +383,7 @@ export default function EssentialWords() {
                 新手必備單字
               </h1>
               <p className="text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
-                剛到日本最常遇到的生活情境單字
+                剛到日本可能遇到的生活情境單字
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -402,7 +426,7 @@ export default function EssentialWords() {
                   {selectedCategory}
                 </h2>
               </div>
-              
+
               {/* 實用提示 */}
               {essentialWords[selectedCategory as keyof typeof essentialWords].tips && (
                 <div className="bg-blue-50 rounded-lg p-4 sm:p-5">
@@ -430,7 +454,7 @@ export default function EssentialWords() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                 {essentialWords[selectedCategory as keyof typeof essentialWords].words.map((word, index) => (
-                  <div 
+                  <div
                     key={index}
                     className="relative border-2 border-gray-200 rounded-lg p-2 sm:p-3 hover:border-blue-300 transition-all duration-200 min-h-[80px] sm:min-h-[90px] flex flex-col justify-center"
                   >
@@ -447,10 +471,10 @@ export default function EssentialWords() {
                           className="mr-1 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
                           title="播放讀音"
                         >
-                          <Image 
-                            src="/icons/volume.svg" 
-                            alt="播放讀音" 
-                            width={12} 
+                          <Image
+                            src="/icons/volume.svg"
+                            alt="播放讀音"
+                            width={12}
                             height={12}
                           />
                         </button>
@@ -481,10 +505,10 @@ export default function EssentialWords() {
                   const parts = phrase.split(' - ');
                   const japanesePart = parts[0]?.trim() || phrase;
                   const chinesePart = parts[1]?.trim();
-                  
+
                   return (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 sm:p-5 rounded-xl border border-blue-100 hover:border-blue-200 transition-all duration-200"
                     >
                       <div className="flex items-start gap-3">
@@ -496,10 +520,10 @@ export default function EssentialWords() {
                           className="flex-shrink-0 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100 mt-1"
                           title="播放句子"
                         >
-                          <Image 
-                            src="/icons/volume.svg" 
-                            alt="播放句子" 
-                            width={16} 
+                          <Image
+                            src="/icons/volume.svg"
+                            alt="播放句子"
+                            width={16}
                             height={16}
                           />
                         </button>
@@ -528,7 +552,7 @@ export default function EssentialWords() {
             找不到你要學的單字嗎？
           </h3>
           <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base leading-relaxed">
-            輸入每日任務，AI會為你生成專屬的日語學習內容
+            輸入每日待辦事項，AI會為你生成專屬的日語學習內容
           </p>
           <Link
             href="/"

@@ -834,7 +834,7 @@ export default function Home() {
                 おはよう！早安！
               </h1>
               <p className="text-gray-600">
-                記錄你的待辦事項，AI會生成相關的日文詞彙
+                輸入待辦事項，由AI生成相關的日文詞彙
               </p>
             </div>
             <div id="hamburger-menu">
