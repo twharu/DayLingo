@@ -411,7 +411,7 @@ export default function EssentialWords() {
             {/* 返回按鈕 */}
             <button
               onClick={() => setSelectedCategory(null)}
-              className="mb-4 sm:mb-6 bg-gray-500 hover:bg-gray-200 active:bg-gray-300 px-4 sm:px-6 py-3 sm:py-2 rounded-xl transition-colors flex items-center text-base sm:text-sm font-medium touch-manipulation"
+              className="mb-4 sm:mb-6 bg-gray-500 hover:bg-gray-200 active:bg-gray-300 px-4 sm:px-6 py-3 sm:py-2 rounded-xl transition-colors flex items-center text-base sm:text-sm font-medium touch-manipulation text-white hover:text-gray-800"
             >
               <span className="mr-2 text-lg sm:text-base">←</span>
               返回選擇情境
