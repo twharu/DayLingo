@@ -152,7 +152,6 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
                 <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                 <div className="relative">
                   <h3 className="font-medium text-red-600">登出</h3>
-                  <p className="text-sm text-gray-500">登出目前帳號</p>
                 </div>
               </button>
             </nav>
