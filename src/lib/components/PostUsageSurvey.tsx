@@ -173,7 +173,7 @@ export default function PostUsageSurvey({ onClose, userId }: PostUsageSurveyProp
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold text-gray-800">使用回饋問卷</h2>
-              <p className="text-sm text-gray-500">步驟 {currentStep + 1} / {questions.length}</p>
+              <p className="text-sm text-gray-700">步驟 {currentStep + 1} / {questions.length}</p>
             </div>
             <button
               onClick={onClose}
@@ -196,7 +196,7 @@ export default function PostUsageSurvey({ onClose, userId }: PostUsageSurveyProp
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               {currentQuestion.title}
             </h3>
-            <p className="text-gray-600 text-sm mb-4">
+            <p className="text-gray-700 text-sm mb-4">
               {currentQuestion.subtitle}
             </p>
 
@@ -232,7 +232,7 @@ export default function PostUsageSurvey({ onClose, userId }: PostUsageSurveyProp
             <button
               onClick={handlePrevious}
               disabled={currentStep === 0}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               上一步
             </button>

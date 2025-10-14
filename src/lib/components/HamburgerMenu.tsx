@@ -83,7 +83,7 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
             {/* 使用者資訊區塊 */}
             <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
               <div>
-                <p className="text-sm text-gray-600 mb-1">{getGreeting()}</p>
+                <p className="text-sm text-gray-700 mb-1">{getGreeting()}</p>
                 <p className="text-lg font-bold text-gray-800">{userName}</p>
               </div>
             </div>
@@ -138,7 +138,7 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
                   <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                   <div className="relative">
                     <h3 className="font-medium text-gray-800">重新開始</h3>
-                    <p className="text-sm text-gray-500">清除目前內容</p>
+                    <p className="text-sm text-gray-700">清除目前內容</p>
                   </div>
                 </button>
               )}

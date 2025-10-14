@@ -659,20 +659,20 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
               className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
               aria-label="關閉問卷"
             >
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           )}
           <h2 className="text-2xl font-bold text-gray-800">日文學習App事前問卷調查</h2>
-          <p className="text-gray-600 mt-3">
+          <p className="text-gray-700 mt-3">
             您好！我是就讀神戶情報大學院大學二年級的學生，我正在開發一款專為台灣留學生設計的日語學習App，透過AI推薦與您今日待辦事項有關的日文詞彙。您的經驗分享將幫助我完成研究論文！問卷約需3分鐘，感謝您的參與！
           </p>
           <div className="flex items-center mt-4">
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}></div>
             </div>
-            <span className="ml-4 text-sm text-gray-600 whitespace-nowrap">
+            <span className="ml-4 text-sm text-gray-700 whitespace-nowrap">
               {currentStep + 1}/{steps.length}
             </span>
           </div>

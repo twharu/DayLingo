@@ -380,7 +380,7 @@ export default function EssentialWords() {
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 sm:mb-3 leading-tight">
                 新手必備單字
               </h1>
-              <p className="text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
+              <p className="text-gray-700 text-sm sm:text-base lg:text-lg leading-relaxed">
                 剛到日本可能遇到的生活情境單字
               </p>
             </div>
@@ -411,7 +411,7 @@ export default function EssentialWords() {
             {/* 返回按鈕 */}
             <button
               onClick={() => setSelectedCategory(null)}
-              className="mb-4 sm:mb-6 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 px-4 sm:px-6 py-3 sm:py-2 rounded-xl transition-colors flex items-center text-base sm:text-sm font-medium touch-manipulation"
+              className="mb-4 sm:mb-6 bg-gray-500 hover:bg-gray-200 active:bg-gray-300 px-4 sm:px-6 py-3 sm:py-2 rounded-xl transition-colors flex items-center text-base sm:text-sm font-medium touch-manipulation"
             >
               <span className="mr-2 text-lg sm:text-base">←</span>
               返回選擇情境
@@ -446,7 +446,7 @@ export default function EssentialWords() {
             <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8">
               <div className="mb-4 sm:mb-6 px-2">
                 <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">常用單字</h3>
-                <p className="text-gray-500 text-xs sm:text-sm">
+                <p className="text-gray-700 text-xs sm:text-sm">
                   點擊喇叭圖示聽讀音
                 </p>
               </div>
@@ -493,7 +493,7 @@ export default function EssentialWords() {
             <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8">
               <div className="mb-4 sm:mb-6 px-2">
                 <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">實用句型</h3>
-                <p className="text-gray-500 text-xs sm:text-sm">
+                <p className="text-gray-700 text-xs sm:text-sm">
                   點擊喇叭圖示聽句子發音
                 </p>
               </div>
@@ -530,7 +530,7 @@ export default function EssentialWords() {
                             {japanesePart}
                           </p>
                           {chinesePart && (
-                            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                            <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
                               {chinesePart}
                             </p>
                           )}

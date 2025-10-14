@@ -204,7 +204,7 @@ export default function VocabularyPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">載入單字庫中...</p>
+            <p className="mt-2 text-gray-700">載入單字庫中...</p>
           </div>
         </div>
       </div>
@@ -220,7 +220,7 @@ export default function VocabularyPage() {
               <h1 className="text-4xl font-bold text-gray-800 mb-2">
                 單字庫
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-700">
                 已收藏 {savedWords.length} 個單字
               </p>
             </div>
@@ -288,7 +288,7 @@ export default function VocabularyPage() {
           <div className="bg-white rounded-lg shadow-lg p-8 text-center">
             <div className="text-6xl mb-4">📖</div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">單字庫是空的</h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-700 mb-6">
               開始學習並收藏你喜歡的單字吧！
             </p>
             <Link 
@@ -326,7 +326,7 @@ export default function VocabularyPage() {
                         <h3 className="text-xl font-bold text-gray-800 mb-1">
                           {word.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
                         </h3>
-                        <p className="text-sm text-gray-600">{word.meaning}</p>
+                        <p className="text-sm text-gray-700">{word.meaning}</p>
                       </div>
 
                       <div className="mb-2">
@@ -379,12 +379,12 @@ export default function VocabularyPage() {
                             style={{ fontSize: '16px', lineHeight: '1' }}
                           />
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-700">
                           {word.exampleTranslation}
                         </p>
                       </div>
 
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-700">
                         收藏時間：{new Date(word.savedAt).toLocaleString('zh-TW')}
                       </p>
                     </div>

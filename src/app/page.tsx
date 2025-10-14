@@ -772,7 +772,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-2xl font-bold text-gray-800 mb-2">感謝您的參與！</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-700 leading-relaxed">
                 您的寶貴意見將幫助我打造更符合留學生需求的日語學習工具。<br />
                 祝您在日本的學習生活順利愉快！
               </p>
@@ -801,7 +801,7 @@ export default function Home() {
               <h1 id="app-title" className="text-4xl font-bold text-gray-800 mb-2">
                 おはよう！早安！
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-700">
                 輸入待辦事項，由AI生成相關的日文詞彙
               </p>
             </div>
@@ -838,7 +838,7 @@ export default function Home() {
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 輸入今天的第一個待辦事項吧！
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-700 mb-6">
                 點擊下方按鈕或日曆上的日期
               </p>
               <button
@@ -874,7 +874,7 @@ export default function Home() {
               <div className="bg-white rounded-lg shadow-lg p-8">
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 mb-2">關聯單字</h2>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-gray-700 text-sm">
                     點擊單字查看例句
                   </p>
                 </div>
@@ -907,7 +907,7 @@ export default function Home() {
                         <h3 className="text-base md:text-lg font-bold text-gray-800 mb-1 md:mb-2">
                           {word.word}
                         </h3>
-                        <p className="text-xs text-gray-600 mb-1 md:mb-2 line-clamp-2">{word.meaning}</p>
+                        <p className="text-xs text-gray-700 mb-1 md:mb-2 line-clamp-2">{word.meaning}</p>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -941,7 +941,7 @@ export default function Home() {
                       <h3 className="text-2xl font-bold text-gray-800 mb-2">
                         {parsedWords[selectedWordIndex].word}
                       </h3>
-                      <p className="text-lg text-gray-600 mb-3">{parsedWords[selectedWordIndex].meaning}</p>
+                      <p className="text-lg text-gray-700 mb-3">{parsedWords[selectedWordIndex].meaning}</p>
                       <p className="text-blue-600 font-medium flex items-center">
                         <button
                           onClick={() => playSound(parsedWords[selectedWordIndex].reading)}
@@ -999,7 +999,7 @@ export default function Home() {
                           style={{ fontSize: '18px', lineHeight: '2' }}
                         />
                       </p>
-                      <p className="text-gray-600">{parsedWords[selectedWordIndex].exampleTranslation}</p>
+                      <p className="text-gray-700">{parsedWords[selectedWordIndex].exampleTranslation}</p>
                     </div>
                   )}
 
@@ -1032,7 +1032,7 @@ export default function Home() {
                           style={{ fontSize: '18px', lineHeight: '2' }}
                         />
                       </p>
-                      <p className="text-gray-600">{parsedWords[selectedWordIndex].phraseTranslation}</p>
+                      <p className="text-gray-700">{parsedWords[selectedWordIndex].phraseTranslation}</p>
                     </div>
                   )}
 
@@ -1068,7 +1068,7 @@ export default function Home() {
                               style={{ fontSize: '16px', lineHeight: '1.8' }}
                             />
                           </p>
-                          <p className="text-gray-600 text-sm">{parsedWords[selectedWordIndex].dialogueATranslation}</p>
+                          <p className="text-gray-700 text-sm">{parsedWords[selectedWordIndex].dialogueATranslation}</p>
                         </div>
                         <div className="bg-white p-3 rounded">
                           <div className="flex items-center justify-between mb-1">
@@ -1098,7 +1098,7 @@ export default function Home() {
                               style={{ fontSize: '16px', lineHeight: '1.8' }}
                             />
                           </p>
-                          <p className="text-gray-600 text-sm">{parsedWords[selectedWordIndex].dialogueBTranslation}</p>
+                          <p className="text-gray-700 text-sm">{parsedWords[selectedWordIndex].dialogueBTranslation}</p>
                         </div>
                       </div>
                     </div>
@@ -1163,24 +1163,24 @@ export default function Home() {
 
             {/* 進度說明 */}
             <div className="max-w-md mx-auto space-y-2">
-              <div className="flex items-center justify-center gap-2 text-gray-600">
+              <div className="flex items-center justify-center gap-2 text-gray-700">
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-sm">分析任務內容中</p>
               </div>
-              <div className="flex items-center justify-center gap-2 text-gray-600">
+              <div className="flex items-center justify-center gap-2 text-gray-700">
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
-              <div className="flex items-center justify-center gap-2 text-gray-600">
+              <div className="flex items-center justify-center gap-2 text-gray-700">
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               </div>
 
-              <p className="text-gray-400 text-xs pt-3">
+              <p className="text-gray-700 text-xs pt-3">
                 預計需要 30-60 秒，請稍候
               </p>
             </div>

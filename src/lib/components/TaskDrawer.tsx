@@ -120,7 +120,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
             onClick={handleClose}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -208,7 +208,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               {errors.taskName && (
                 <p className="mt-2 text-sm text-red-600">{errors.taskName}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">1-100 字元</p>
+              <p className="mt-1 text-xs text-gray-700">1-100 字元</p>
             </div>
 
             {/* 4. 任務詳細描述 */}
@@ -237,7 +237,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               {errors.taskDescription && (
                 <p className="mt-2 text-sm text-red-600">{errors.taskDescription}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">5-100 字元</p>
+              <p className="mt-1 text-xs text-gray-700">5-100 字元</p>
             </div>
 
             {/* 按鈕區域 */}
