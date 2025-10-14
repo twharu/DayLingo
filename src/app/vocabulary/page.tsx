@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -45,7 +45,21 @@ export default function VocabularyPage() {
 
   const loadSavedWords = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'savedWords'));
+      // 確保有 userId
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        console.error('未找到 userId，無法載入單字');
+        setSavedWords([]);
+        setLoading(false);
+        return;
+      }
+
+      // 只查詢該使用者的單字
+      const q = query(
+        collection(db, 'savedWords'),
+        where('userId', '==', userId)
+      );
+      const querySnapshot = await getDocs(q);
       const words: SavedWord[] = [];
       querySnapshot.forEach((doc) => {
         words.push({ id: doc.id, ...doc.data() } as SavedWord);

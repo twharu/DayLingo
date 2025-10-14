@@ -354,10 +354,17 @@ export default function Home() {
     const word = parsedWords[wordIndex];
     if (!word) return;
 
+    // 確保有 userId
+    if (!userId) {
+      alert('請先登入後再收藏單字');
+      return;
+    }
+
     setSavingWords(prev => new Set(prev).add(wordIndex));
 
     try {
       await addDoc(collection(db, 'savedWords'), {
+        userId: userId, // 加入使用者 ID
         word: word.word,
         reading: word.reading,
         meaning: word.meaning,
