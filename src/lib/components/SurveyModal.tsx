@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 
 interface SurveyModalProps {
   isOpen: boolean;
@@ -35,7 +34,6 @@ interface SurveyData {
 }
 
 export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigger = false }: SurveyModalProps) {
-  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [surveyData, setSurveyData] = useState<SurveyData>({
     age: '',

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateJapaneseContent } from '@/lib/openai';
-import { authenticateRequest, getClientIP } from '@/lib/apiAuth';
+import { authenticateRequest } from '@/lib/apiAuth';
 import { checkRateLimit } from '@/lib/rateLimiter';
 
 // 新聞搜尋功能已移除，根據用戶要求不再生成新聞內容
 
 // 測試模式的模擬內容 (新格式：12個單字，每個包含例句、詞組、小對話)
-function generateMockContent(task: string) {
+function generateMockContent() {
   return `## 關聯單字
 
 1. <ruby>商品<rt>しょうひん</rt></ruby> - 商品
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
     // 4. 檢查是否為測試模式
     if (process.env.NEXT_PUBLIC_TEST_MODE === 'true') {
       // 使用模擬內容
-      content = generateMockContent(task);
+      content = generateMockContent();
       // 模擬 API 延遲（讓用戶看到 loading 動畫）
       await new Promise(resolve => setTimeout(resolve, 4000));
     } else {

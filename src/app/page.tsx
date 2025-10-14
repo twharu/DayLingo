@@ -27,7 +27,6 @@ export default function Home() {
 
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [taskName, setTaskName] = useState('');
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState<{content: string} | null>(null);
   const [parsedWords, setParsedWords] = useState<{
@@ -53,10 +52,8 @@ export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  const [voiceUsageCount, setVoiceUsageCount] = useState(0);
   const [showPostSurvey, setShowPostSurvey] = useState(false);
   const [isTaskDrawerOpen, setIsTaskDrawerOpen] = useState(false);
-  const [currentTaskTime, setCurrentTaskTime] = useState<string | null>(null);
 
   useEffect(() => {
     // 檢查是否在瀏覽器環境
@@ -84,10 +81,11 @@ export default function Home() {
       // 有用戶ID，檢查 Firebase 是否已有問卷記錄
       checkSurveyStatus(storedUserId);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 移除 checkFirstVisit 依賴，避免無限循環
 
   // 檢查用戶是否已填寫事前問卷
-  const checkSurveyStatus = async (userId: string) => {
+  const checkSurveyStatus = useCallback(async (userId: string) => {
     try {
       // 先檢查 localStorage 緩存
       const cachedStatus = localStorage.getItem('surveyCompleted');
@@ -139,7 +137,7 @@ export default function Home() {
         }, 1000);
       }
     }
-  };
+  }, [checkFirstVisit]);
 
   // 獨立的後問卷檢查 useEffect - 加入更嚴格的控制
   useEffect(() => {
@@ -213,6 +211,7 @@ export default function Home() {
     
     // 執行檢查
     checkPostSurvey();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]); // 移除 showPostSurvey 依賴，避免無限循環
 
   // 移除 beforeunload 處理器，改為在保存單字時記錄會話（更可靠）
@@ -349,34 +348,6 @@ export default function Home() {
 
     console.log('✅ 解析完成，總共解析到', words.length, '個單字');
     setParsedWords(words);
-  };
-
-  const filterContent = (content: string) => {
-    // 移除關聯單字和常用詞組部分，只保留日常對話
-    const lines = content.split('\n');
-    const filteredLines = [];
-    let skipSection = false;
-
-    for (const line of lines) {
-      // 檢查是否進入要跳過的區塊
-      if (line.includes('## 關聯單字') || line.includes('## 常用詞組') || line.includes('## 重要詞組')) {
-        skipSection = true;
-        continue;
-      }
-
-      // 檢查是否到達日常對話
-      if (line.includes('## 日常對話')) {
-        skipSection = false;
-        continue; // 跳過這個標題行
-      }
-
-      // 只保留不在跳過區塊中的內容
-      if (!skipSection) {
-        filteredLines.push(line);
-      }
-    }
-
-    return filteredLines.join('\n').trim();
   };
 
   const saveWord = async (wordIndex: number) => {
@@ -567,9 +538,6 @@ export default function Home() {
 
   const playSound = (text: string) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      // 計數語音使用
-      setVoiceUsageCount(prev => prev + 1);
-
       // 停止當前播放
       window.speechSynthesis.cancel();
 
@@ -625,11 +593,8 @@ export default function Home() {
     setSelectedWordIndex(null);
     setSessionStartTime(null);
     sessionRecorded.current = false; // 重置記錄標記
-    setCurrentTaskTime(null);
-    setVoiceUsageCount(0);
     setSelectedDate(getTodayDate());
     setSelectedCategory('');
-    setTaskName('');
   };
 
   // 處理日曆日期點擊
@@ -709,13 +674,10 @@ export default function Home() {
 
         // 更新任務相關狀態
         setSelectedCategory(category); // 更新分類，用於保存單字時記錄
-        setTaskName(name); // 更新任務名稱
 
         // 開始學習會話時間記錄
         setSessionStartTime(new Date());
         sessionRecorded.current = false; // 重置記錄標記
-        setCurrentTaskTime(null);
-        setVoiceUsageCount(0);
         setSavedWords(new Set());
 
         // 增加使用次數
@@ -743,7 +705,7 @@ export default function Home() {
 
     // 用戶註冊完成後，檢查 Firebase 問卷狀態（不只看 localStorage）
     checkSurveyStatus(newUserId);
-  }, []);
+  }, [checkSurveyStatus]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
@@ -754,7 +716,6 @@ export default function Home() {
       <UserRegistration
         isOpen={showUserRegistration}
         onComplete={handleUserRegistrationComplete}
-        onClose={() => setShowUserRegistration(false)}
       />
       
       <SurveyModal
@@ -838,8 +799,7 @@ export default function Home() {
               </p>
             </div>
             <div id="hamburger-menu">
-              <HamburgerMenu 
-                currentPath="/"
+              <HamburgerMenu
                 hasContent={!!content}
                 onClearContent={clearContent}
               />

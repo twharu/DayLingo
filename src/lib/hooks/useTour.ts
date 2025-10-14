@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { db } from '@/lib/firebase';

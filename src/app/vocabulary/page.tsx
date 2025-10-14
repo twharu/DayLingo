@@ -59,29 +59,6 @@ export default function VocabularyPage() {
     setLoading(false);
   };
 
-  const getFilteredWords = () => {
-    if (selectedCategory === 'all') {
-      return savedWords;
-    }
-    return savedWords.filter(word => word.category === selectedCategory);
-  };
-
-  const getWordsByCategory = () => {
-    const wordsByCategory: { [key: string]: SavedWord[] } = {};
-    
-    categories.forEach(category => {
-      wordsByCategory[category] = savedWords.filter(word => word.category === category);
-    });
-    
-    // 添加未分類的單字
-    const uncategorizedWords = savedWords.filter(word => !word.category || !categories.includes(word.category));
-    if (uncategorizedWords.length > 0) {
-      wordsByCategory['未分類'] = uncategorizedWords;
-    }
-    
-    return wordsByCategory;
-  };
-
   const preprocessJapaneseText = (text: string) => {
     // 針對常見的日語發音問題做預處理
     let processedText = text;
@@ -240,7 +217,7 @@ export default function VocabularyPage() {
               >
                 回到首頁
               </Link>
-              <HamburgerMenu currentPath="/vocabulary" />
+              <HamburgerMenu />
             </div>
           </div>
         </header>

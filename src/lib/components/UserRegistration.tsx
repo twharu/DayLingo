@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -8,10 +8,9 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 interface UserRegistrationProps {
   isOpen: boolean;
   onComplete: (userId: string) => void;
-  onClose?: () => void;
 }
 
-export default function UserRegistration({ isOpen, onComplete, onClose }: UserRegistrationProps) {
+export default function UserRegistration({ isOpen, onComplete }: UserRegistrationProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

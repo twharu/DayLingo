@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
@@ -257,7 +256,6 @@ const essentialWords = {
 };
 
 export default function EssentialWords() {
-  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const preprocessJapaneseText = (text: string) => {
@@ -387,7 +385,7 @@ export default function EssentialWords() {
               </p>
             </div>
             <div className="flex-shrink-0">
-              <HamburgerMenu currentPath="/essential-words" />
+              <HamburgerMenu />
             </div>
           </div>
         </header>
@@ -395,7 +393,7 @@ export default function EssentialWords() {
         {!selectedCategory ? (
           /* 情境選擇頁面 */
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 mb-6 sm:mb-8">
-            {Object.entries(essentialWords).map(([category, data]) => (
+            {Object.entries(essentialWords).map(([category]) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
@@ -551,9 +549,6 @@ export default function EssentialWords() {
           <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
             找不到你要學的單字嗎？
           </h3>
-          <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base leading-relaxed">
-            輸入每日待辦事項，AI會為你生成專屬的日語學習內容
-          </p>
           <Link
             href="/"
             className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 transition-all duration-200 font-semibold text-base sm:text-lg touch-manipulation shadow-lg hover:shadow-xl"

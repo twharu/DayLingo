@@ -4,21 +4,18 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface HamburgerMenuProps {
-  currentPath?: string;
   onClearContent?: () => void;
   hasContent?: boolean;
 }
 
-export default function HamburgerMenu({ currentPath, onClearContent, hasContent }: HamburgerMenuProps) {
+export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerMenuProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userName, setUserName] = useState('');
-  const [userPhotoURL, setUserPhotoURL] = useState('');
 
   // 載入使用者資訊
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setUserName(localStorage.getItem('userName') || '使用者');
-      setUserPhotoURL(localStorage.getItem('userPhotoURL') || '');
     }
   }, []);
 
