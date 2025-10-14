@@ -223,7 +223,7 @@ export default function PostUsageSurvey({ onClose, userId }: PostUsageSurveyProp
                 value={responses[currentQuestion.key]}
                 onChange={(e) => handleOptionSelect(currentQuestion.key, e.target.value)}
                 placeholder={currentQuestion.placeholder}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none h-32"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none h-32 placeholder:text-gray-700"
               />
             )}
           </div>

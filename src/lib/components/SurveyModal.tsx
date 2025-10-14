@@ -167,7 +167,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   placeholder="例：25"
                   value={surveyData.age}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, age: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-700"
                 />
               </div>
 
@@ -180,7 +180,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   placeholder="例：3個月"
                   value={surveyData.timeInJapan}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, timeInJapan: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-700"
                 />
               </div>
 
@@ -219,7 +219,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                       placeholder="請說明..."
                       value={surveyData.otherIdentity}
                       onChange={(e) => setSurveyData(prev => ({ ...prev, otherIdentity: e.target.value }))}
-                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-700 ${
                         surveyData.otherIdentity.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
                       }`}
                     />
@@ -345,7 +345,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   placeholder="請說明..."
                   value={surveyData.otherDifficulty}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, otherDifficulty: e.target.value }))}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-700 ${
                     surveyData.otherDifficulty.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                 />
@@ -403,7 +403,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   placeholder="請說明..."
                   value={surveyData.otherSituation}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, otherSituation: e.target.value }))}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-700 ${
                     surveyData.otherSituation.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                 />
@@ -465,7 +465,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   placeholder="請說明..."
                   value={surveyData.otherDesired}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, otherDesired: e.target.value }))}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-700 ${
                     surveyData.otherDesired.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                 />
@@ -516,7 +516,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   placeholder="請說明..."
                   value={surveyData.otherLearningMethod}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, otherLearningMethod: e.target.value }))}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-700 ${
                     surveyData.otherLearningMethod.trim() === '' ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                 />
