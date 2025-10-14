@@ -27,6 +27,21 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
     return 'こんばんは！晚安';
   };
 
+  // 登出功能
+  const handleLogout = () => {
+    if (confirm('確定要登出嗎？')) {
+      // 清除所有用戶相關的 localStorage 資料
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userPhotoURL');
+      localStorage.removeItem('tourCompleted');
+
+      // 重新載入頁面，會自動顯示登入畫面
+      window.location.reload();
+    }
+  };
+
   return (
     <>
       {/* 漢堡選單按鈕 */}
@@ -127,6 +142,19 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
                   </div>
                 </button>
               )}
+
+              {/* 登出按鈕 */}
+              <button
+                onClick={handleLogout}
+                className="w-full p-4 rounded-lg transition-all duration-200 hover:bg-red-50 relative group text-left border-t border-gray-200 mt-4 pt-6"
+              >
+                <div className="absolute inset-0 bg-red-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
+                <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                <div className="relative">
+                  <h3 className="font-medium text-red-600">登出</h3>
+                  <p className="text-sm text-gray-500">登出目前帳號</p>
+                </div>
+              </button>
             </nav>
           </div>
         </>
