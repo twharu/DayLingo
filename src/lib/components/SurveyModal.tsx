@@ -203,9 +203,9 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                       type="button"
                       onClick={() => setSurveyData(prev => ({ ...prev, identity }))}
                       className={`w-full p-2 rounded-lg border-2 text-left transition-colors text-sm ${
-                        surveyData.identity === identity 
+                        surveyData.identity === identity
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-300 hover:border-gray-400'
+                          : 'border-gray-300 hover:border-gray-400 text-gray-800'
                       }`}
                     >
                       {identity}
@@ -256,9 +256,9 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                       type="button"
                       onClick={() => setSurveyData(prev => ({ ...prev, japaneseLevelBefore: level }))}
                       className={`w-full p-2 rounded-lg border-2 text-left transition-colors text-sm ${
-                        surveyData.japaneseLevelBefore === level 
+                        surveyData.japaneseLevelBefore === level
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-300 hover:border-gray-400'
+                          : 'border-gray-300 hover:border-gray-400 text-gray-800'
                       }`}
                     >
                       {level}
@@ -285,9 +285,9 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                       type="button"
                       onClick={() => setSurveyData(prev => ({ ...prev, japaneseLevelCurrent: level }))}
                       className={`w-full p-2 rounded-lg border-2 text-left transition-colors text-sm ${
-                        surveyData.japaneseLevelCurrent === level 
+                        surveyData.japaneseLevelCurrent === level
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-300 hover:border-gray-400'
+                          : 'border-gray-300 hover:border-gray-400 text-gray-800'
                       }`}
                     >
                       {level}
@@ -598,9 +598,9 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   type="button"
                   onClick={() => setSurveyData(prev => ({ ...prev, appInterest: option }))}
                   className={`w-full p-2 rounded-lg border-2 text-left transition-colors text-sm ${
-                    surveyData.appInterest === option 
+                    surveyData.appInterest === option
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 hover:border-gray-400'
+                      : 'border-gray-300 hover:border-gray-400 text-gray-800'
                   }`}
                 >
                   {option}
