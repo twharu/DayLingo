@@ -167,7 +167,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   placeholder="例：25"
                   value={surveyData.age}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, age: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400"
                 />
               </div>
 
@@ -180,7 +180,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                   placeholder="例：3個月"
                   value={surveyData.timeInJapan}
                   onChange={(e) => setSurveyData(prev => ({ ...prev, timeInJapan: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400"
                 />
               </div>
 
