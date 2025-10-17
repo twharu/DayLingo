@@ -30,15 +30,28 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
   // 登出功能
   const handleLogout = () => {
     if (confirm('確定要登出嗎？')) {
+      // 取得 userId 用於清除相關的動態 key
+      const userId = localStorage.getItem('userId');
+
       // 清除所有用戶相關的 localStorage 資料
       localStorage.removeItem('userId');
       localStorage.removeItem('userName');
       localStorage.removeItem('userEmail');
       localStorage.removeItem('userPhotoURL');
       localStorage.removeItem('tourCompleted');
+      localStorage.removeItem('surveyCompleted');
+      localStorage.removeItem('postSurveyCompleted');
+      localStorage.removeItem('localUsageCount');
 
-      // 重新載入頁面，會自動顯示登入畫面
-      window.location.reload();
+      // 清除動態 key（如果有 userId）
+      if (userId) {
+        localStorage.removeItem(`postSurveyTriggered_${userId}`);
+        localStorage.removeItem(`usageCount_${userId}`);
+        localStorage.removeItem(`lastUsageCheck_${userId}`);
+      }
+
+      // 強制重新載入頁面（清除快取）
+      window.location.href = window.location.origin;
     }
   };
 
