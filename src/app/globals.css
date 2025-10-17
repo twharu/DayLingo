@@ -50,3 +50,15 @@ rt {
   font-weight: normal;
   line-height: 1;
 }
+
+/* 強制所有表單元素使用黑色文字 - 解決跨瀏覽器和跨裝置的顏色一致性問題 */
+input, textarea, select {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+/* Placeholder 使用灰色，與實際輸入文字區分 */
+input::placeholder, textarea::placeholder {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+}
