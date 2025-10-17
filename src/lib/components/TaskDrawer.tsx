@@ -163,7 +163,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                     setErrors({ ...errors, category: undefined });
                   }
                 }}
-                className={`w-full p-4 border rounded-lg focus:ring-2 focus:border-transparent text-lg text-gray-900 ${
+                className={`w-full p-4 border rounded-lg focus:ring-2 focus:border-transparent text-lg text-black ${
                   errors.category
                     ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
@@ -197,7 +197,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                     setErrors({ ...errors, taskName: undefined });
                   }
                 }}
-                className={`w-full p-4 border rounded-lg focus:ring-2 focus:border-transparent text-lg text-gray-900 placeholder:text-gray-500 ${
+                className={`w-full p-4 border rounded-lg focus:ring-2 focus:border-transparent text-lg text-black placeholder:text-gray-500 ${
                   errors.taskName
                     ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
@@ -225,7 +225,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                     setErrors({ ...errors, taskDescription: undefined });
                   }
                 }}
-                className={`w-full p-4 border rounded-lg focus:ring-2 focus:border-transparent text-lg text-gray-900 placeholder:text-gray-500 ${
+                className={`w-full p-4 border rounded-lg focus:ring-2 focus:border-transparent text-lg text-black placeholder:text-gray-500 ${
                   errors.taskDescription
                     ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
