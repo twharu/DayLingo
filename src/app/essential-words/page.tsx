@@ -141,7 +141,7 @@ const essentialWords = {
       { word: 'ICカード', reading: 'アイシーカード', meaning: 'IC卡/交通卡' },
       { word: '乗り換え', reading: 'のりかえ', meaning: '轉乘' },
       { word: '改札', reading: 'かいさつ', meaning: '檢票口' },
-      { word: 'ホーム', reading: 'ホーム', meaning: '月台' },
+      { word: 'ホーム', reading: 'ほーむ', meaning: '月台' },
       { word: '行き先', reading: 'いきさき', meaning: '目的地' },
       { word: '運賃', reading: 'うんちん', meaning: '車資' },
       { word: '時刻表', reading: 'じこくひょう', meaning: '時刻表' },
@@ -210,15 +210,16 @@ const essentialWords = {
       { word: '銀行', reading: 'ぎんこう', meaning: '銀行' },
       { word: '口座', reading: 'こうざ', meaning: '帳戶' },
       { word: '開設', reading: 'かいせつ', meaning: '開設' },
-      { word: 'キャッシュカード', reading: 'キャッシュカード', meaning: '金融卡' },
+      { word: 'キャッシュカード', reading: 'きゃっしゅかーど', meaning: '金融卡' },
       { word: '通帳', reading: 'つうちょう', meaning: '存摺' },
       { word: '印鑑', reading: 'いんかん', meaning: '印章' },
       { word: '暗証番号', reading: 'あんしょうばんごう', meaning: '密碼' },
       { word: '預金', reading: 'よきん', meaning: '存款' },
       { word: '引き出し', reading: 'ひきだし', meaning: '提款' },
-      { word: 'ATM', reading: 'エーティーエム', meaning: 'ATM' },
+      { word: '預け入れ', reading: 'あずけいれ', meaning: '存錢' },
       { word: '振込', reading: 'ふりこみ', meaning: '轉帳' },
       { word: '手数料', reading: 'てすうりょう', meaning: '手續費' },
+      { word: '残高', reading: 'ざんだか', meaning: '餘額' },
     ],
     phrases: [
       '口座を開設したいです - 我想要開戶',
@@ -233,7 +234,7 @@ const essentialWords = {
     ],
     words: [
       { word: '携帯電話', reading: 'けいたいでんわ', meaning: '手機' },
-      { word: 'スマホ', reading: 'スマホ', meaning: '智慧型手機' },
+      { word: 'スマホ', reading: 'すまほ', meaning: '智慧型手機' },
       { word: '契約', reading: 'けいやく', meaning: '契約' },
       { word: 'プラン', reading: 'ぷらん', meaning: '方案' },
       { word: '料金', reading: 'りょうきん', meaning: '費用' },
@@ -247,7 +248,7 @@ const essentialWords = {
       { word: '違約金', reading: 'いやくきん', meaning: '違約金' },
     ],
     phrases: [
-      'スマホを契約したいです - 我想申辦手機',
+      '携帯を契約したいです - 我想申辦門號',
       'このプランの料金はいくらですか - 這個方案的費用是多少？',
     ]
   }
