@@ -111,7 +111,6 @@ const essentialWords = {
       '有些餐廳（例如拉麵店），要先在點餐機購買餐券再入座'
     ],
     words: [
-      { word: 'メニュー', reading: 'メニュー', meaning: '菜單' },
       { word: '注文', reading: 'ちゅうもん', meaning: '點餐' },
       { word: '定食', reading: 'ていしょく', meaning: '定食' },
       { word: '麺の固さ', reading: 'メンのかたさ', meaning: '麵的硬度' },
