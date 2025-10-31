@@ -231,7 +231,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 rows={4}
-                placeholder="情境、目的、商品名稱等..."
+                placeholder="情境、目的、商品名稱等...例如：去藥妝店買牙膏、洗髮精/去銀行辦印鑑登錄/跟朋友去吃漢堡排"
                 required
               />
               {errors.taskDescription && (
