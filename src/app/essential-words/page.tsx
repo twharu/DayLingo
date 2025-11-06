@@ -383,7 +383,13 @@ export default function EssentialWords() {
                 剛到日本可能遇到的生活情境單字
               </p>
             </div>
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex items-center gap-2 sm:gap-3">
+              <Link
+                href="/"
+                className="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
+              >
+                回到首頁
+              </Link>
               <HamburgerMenu />
             </div>
           </div>
@@ -540,6 +546,15 @@ export default function EssentialWords() {
                 })}
               </div>
             </div>
+
+            {/* 底部返回按鈕 */}
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="mt-6 sm:mt-8 bg-gray-500 hover:bg-gray-200 active:bg-gray-300 px-4 sm:px-6 py-3 sm:py-2 rounded-xl transition-colors flex items-center text-base sm:text-sm font-medium touch-manipulation text-white hover:text-gray-800"
+            >
+              <span className="mr-2 text-lg sm:text-base">←</span>
+              返回選擇情境
+            </button>
           </div>
         )}
 

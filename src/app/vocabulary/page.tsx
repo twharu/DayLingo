@@ -407,6 +407,16 @@ export default function VocabularyPage() {
             })()}
           </div>
         )}
+
+        {/* 底部返回按鈕 */}
+        <div className="bg-white rounded-lg shadow-lg p-6 text-center mt-8">
+          <Link
+            href="/"
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            回到首頁
+          </Link>
+        </div>
       </div>
     </div>
   );
