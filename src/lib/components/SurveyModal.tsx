@@ -646,19 +646,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
   return (
     <div className="fixed inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b relative">
-          {/* 關閉按鈕 */}
-          {onClose && (
-            <button
-              onClick={handleClose}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="關閉問卷"
-            >
-              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
+        <div className="p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-800">日文學習App事前問卷調查</h2>
           <p className="text-gray-700 mt-3">
             您好！我是就讀神戶情報大學院大學二年級的學生，我正在開發一款專為台灣留學生設計的日語學習App，透過AI推薦與您今日待辦事項有關的日文詞彙。您的經驗分享將幫助我完成研究論文！問卷約需3分鐘，感謝您的參與！

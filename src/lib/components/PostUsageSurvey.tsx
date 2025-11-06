@@ -170,19 +170,9 @@ export default function PostUsageSurvey({ onClose, userId }: PostUsageSurveyProp
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800">使用回饋問卷</h2>
-              <p className="text-sm text-gray-700">步驟 {currentStep + 1} / {questions.length}</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-gray-800">使用回饋問卷</h2>
+            <p className="text-sm text-gray-700">步驟 {currentStep + 1} / {questions.length}</p>
           </div>
 
           <div className="mb-6">
