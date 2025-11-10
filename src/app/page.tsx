@@ -5,7 +5,6 @@ import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'fireb
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import SurveyModal from '@/lib/components/SurveyModal';
-import PostUsageSurvey from '@/lib/components/PostUsageSurvey';
 import UserRegistration from '@/lib/components/UserRegistration';
 import FirebaseStatus from '@/lib/components/FirebaseStatus';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
@@ -139,80 +138,6 @@ export default function Home() {
     }
   }, [checkFirstVisit]);
 
-  // 獨立的後問卷檢查 useEffect - 加入更嚴格的控制
-  useEffect(() => {
-    if (!userId || showPostSurvey) return; // 如果已經顯示問卷，直接返回
-    
-    // 額外檢查：如果已經觸發過就不要再檢查了
-    const alreadyTriggered = localStorage.getItem(`postSurveyTriggered_${userId}`);
-    if (alreadyTriggered) return;
-    
-    const checkPostSurvey = async () => {
-      const postSurveyCompleted = localStorage.getItem('postSurveyCompleted');
-      const surveyCompleted = localStorage.getItem('surveyCompleted');
-      
-      // 如果後問卷已完成，或事前問卷未完成，直接返回
-      if (postSurveyCompleted || !surveyCompleted) return;
-      
-      // 檢查是否已經檢查過使用次數
-      const lastCheckTime = localStorage.getItem(`lastUsageCheck_${userId}`);
-      const now = Date.now();
-
-      // 如果 1 小時內已檢查過，跳過
-      if (lastCheckTime && (now - parseInt(lastCheckTime)) < 60 * 60 * 1000) {
-        return;
-      }
-      
-      try {
-        // 先檢查本地緩存的使用次數
-        const cachedCount = localStorage.getItem(`usageCount_${userId}`);
-        
-        if (cachedCount && parseInt(cachedCount) >= 5) {
-          // 防止重複觸發
-          localStorage.setItem(`postSurveyTriggered_${userId}`, 'true');
-          setTimeout(() => {
-            setShowPostSurvey(true);
-          }, 2000);
-          return;
-        }
-        
-        // 如果緩存不存在或小於5，才查詢 Firebase
-        const q = query(collection(db, 'learningSessions'), where('userId', '==', userId));
-        const querySnapshot = await getDocs(q);
-        const usageCount = querySnapshot.size;
-        
-        // 緩存查詢結果
-        localStorage.setItem(`usageCount_${userId}`, usageCount.toString());
-        localStorage.setItem(`lastUsageCheck_${userId}`, now.toString());
-        
-        console.log(`用戶 ${userId} 使用次數: ${usageCount}`);
-        
-        if (usageCount >= 5) {
-          // 防止重複觸發
-          localStorage.setItem(`postSurveyTriggered_${userId}`, 'true');
-          setTimeout(() => {
-            setShowPostSurvey(true);
-          }, 2000);
-        }
-      } catch (error) {
-        console.error('檢查使用次數失敗:', error);
-        // 如果是配額錯誤，使用本地計數
-        if (error && typeof error === 'object' && 'code' in error && error.code === 'resource-exhausted') {
-          const localCount = parseInt(localStorage.getItem('localUsageCount') || '0');
-          if (localCount >= 5) {
-            localStorage.setItem(`postSurveyTriggered_${userId}`, 'true');
-            setTimeout(() => {
-              setShowPostSurvey(true);
-            }, 2000);
-          }
-        }
-      }
-    };
-    
-    // 執行檢查
-    checkPostSurvey();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]); // 移除 showPostSurvey 依賴，避免無限循環
 
   // 移除 beforeunload 處理器，改為在保存單字時記錄會話（更可靠）
 
@@ -370,6 +295,12 @@ export default function Home() {
         meaning: word.meaning,
         example: word.example,
         exampleTranslation: word.exampleTranslation,
+        phrase: word.phrase || '',
+        phraseTranslation: word.phraseTranslation || '',
+        dialogueA: word.dialogueA || '',
+        dialogueATranslation: word.dialogueATranslation || '',
+        dialogueB: word.dialogueB || '',
+        dialogueBTranslation: word.dialogueBTranslation || '',
         category: selectedCategory,
         savedAt: new Date().toISOString()
       });
@@ -454,53 +385,28 @@ export default function Home() {
     return processedText;
   };
 
-  // 更新參與者使用次數 - 加入本地備援機制
+  // 更新參與者使用次數 - 簡化版本
   const incrementParticipantUsage = async () => {
     if (!userId) return;
-    
-    // 先更新本地計數
-    const currentLocalCount = parseInt(localStorage.getItem('localUsageCount') || '0');
-    const newLocalCount = currentLocalCount + 1;
-    localStorage.setItem('localUsageCount', newLocalCount.toString());
-    
-    // 更新本地緩存
-    localStorage.setItem(`usageCount_${userId}`, newLocalCount.toString());
-    
+
     try {
       const q = query(collection(db, 'users'), where('userId', '==', userId));
       const querySnapshot = await getDocs(q);
-      
+
       if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
         const currentData = userDoc.data();
         const newUsageCount = (currentData.usageCount || 0) + 1;
-        
+
         await updateDoc(doc(db, 'users', userDoc.id), {
           usageCount: newUsageCount,
           lastUsed: new Date().toISOString()
         });
-        
+
         console.log(`參與者 ${userId} 使用次數更新為: ${newUsageCount}`);
-        
-        // 檢查是否需要顯示後問卷
-        if (newUsageCount >= 5 && !localStorage.getItem('postSurveyCompleted')) {
-          setTimeout(() => {
-            setShowPostSurvey(true);
-          }, 3000);
-        }
       }
     } catch (error) {
       console.error('更新參與者使用次數失敗:', error);
-
-      // 如果 Firebase 失敗，使用本地計數檢查後問卷
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'resource-exhausted') {
-        console.log('使用本地計數機制');
-        if (newLocalCount >= 5 && !localStorage.getItem('postSurveyCompleted')) {
-          setTimeout(() => {
-            setShowPostSurvey(true);
-          }, 3000);
-        }
-      }
     }
   };
 
@@ -749,17 +655,6 @@ export default function Home() {
         }}
       />
 
-      {/* 後問卷 */}
-      {showPostSurvey && userId && (
-        <PostUsageSurvey
-          userId={userId}
-          onClose={() => {
-            setShowPostSurvey(false);
-            // 清理觸發標記，但保持完成標記
-            localStorage.setItem(`postSurveyTriggered_${userId}`, 'true');
-          }}
-        />
-      )}
 
       {/* 感謝信息彈窗 */}
       {showThankYou && (
@@ -836,7 +731,7 @@ export default function Home() {
                 </svg>
               </button>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                輸入今天的第一個待辦事項吧！
+                輸入今天的待辦事項吧！
               </h3>
               <p className="text-gray-700 mb-6">
                 點擊下方按鈕或日曆上的日期

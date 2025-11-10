@@ -104,14 +104,14 @@ export default function PostUsageSurvey({ onClose, userId }: PostUsageSurveyProp
     },
     {
       title: "最有用功能",
-      subtitle: "您認為APP中哪個功能對您最有幫助？",
+      subtitle: "您認為APP中哪個功能或頁面對您最有幫助？",
       type: "radio",
       key: "mostHelpfulFeature" as keyof typeof responses,
       options: [
         "AI生成學習內容",
         "語音播放功能",
-        "單字收藏功能",
-        "例句展示功能"
+        "單字收藏頁面",
+        "新手必備單字頁面"
       ]
     },
     {
