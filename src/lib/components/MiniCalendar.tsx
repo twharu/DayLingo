@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 interface MiniCalendarProps {
   onDateClick?: (date: Date) => void;
+  datesWithRecords?: Set<string>; // YYYY-MM-DD 格式的日期集合
 }
 
-export default function MiniCalendar({ onDateClick }: MiniCalendarProps) {
+export default function MiniCalendar({ onDateClick, datesWithRecords }: MiniCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
 
@@ -72,6 +73,11 @@ export default function MiniCalendar({ onDateClick }: MiniCalendarProps) {
     return date.toDateString() === today.toDateString();
   };
 
+  const hasRecord = (date: Date) => {
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return datesWithRecords?.has(dateStr) || false;
+  };
+
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-4">
@@ -116,26 +122,29 @@ export default function MiniCalendar({ onDateClick }: MiniCalendarProps) {
               key={index}
               onClick={() => onDateClick?.(day.date)}
               className={`
-                h-8 flex items-center justify-center text-xs font-medium rounded transition-all cursor-pointer
+                h-8 flex items-center justify-center text-xs font-medium rounded transition-all cursor-pointer relative
                 ${day.isCurrentMonth ? 'text-gray-800' : 'text-gray-300'}
                 ${isToday(day.date) ? 'bg-blue-100 text-blue-800 ring-1 ring-blue-500' : 'hover:bg-gray-50'}
                 hover:bg-blue-50
               `}
             >
               {day.date.getDate()}
+              {hasRecord(day.date) && day.isCurrentMonth && (
+                <div className="absolute bottom-0.5 w-1 h-1 bg-green-500 rounded-full"></div>
+              )}
             </div>
           ))}
       </div>
       
       {/* 圖例 */}
-      <div className="mt-3 flex items-center justify-center space-x-4 text-xs text-gray-500">
+      <div className="mt-3 flex items-center justify-center space-x-3 text-xs text-gray-500">
         <div className="flex items-center space-x-1">
           <div className="w-2 h-2 bg-blue-100 border border-blue-500 rounded"></div>
           <span>今天</span>
         </div>
         <div className="flex items-center space-x-1">
-          <div className="w-2 h-2 bg-gray-200 rounded"></div>
-          <span>點擊日期輸入待辦事項</span>
+          <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+          <span>有記錄</span>
         </div>
       </div>
     </div>

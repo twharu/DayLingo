@@ -53,6 +53,14 @@ export default function Home() {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [showPostSurvey, setShowPostSurvey] = useState(false);
   const [isTaskDrawerOpen, setIsTaskDrawerOpen] = useState(false);
+  const [datesWithRecords, setDatesWithRecords] = useState<Set<string>>(new Set());
+  const [selectedDateRecords, setSelectedDateRecords] = useState<{
+    date: string;
+    tasks: Array<{
+      taskName: string;
+    }>;
+  } | null>(null);
+  const [currentTaskName, setCurrentTaskName] = useState<string>('');
 
   useEffect(() => {
     // 檢查是否在瀏覽器環境
@@ -79,9 +87,62 @@ export default function Home() {
     } else {
       // 有用戶ID，檢查 Firebase 是否已有問卷記錄
       checkSurveyStatus(storedUserId);
+      // 載入有學習記錄的日期
+      loadRecordDates(storedUserId);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 移除 checkFirstVisit 依賴，避免無限循環
+
+  // 載入有學習記錄的日期
+  const loadRecordDates = async (userId: string) => {
+    try {
+      const q = query(collection(db, 'learningSessions'), where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      const dates = new Set<string>();
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.date) {
+          dates.add(data.date); // date 格式已經是 YYYY-MM-DD
+        }
+      });
+
+      setDatesWithRecords(dates);
+    } catch (error) {
+      console.error('載入學習記錄日期失敗:', error);
+    }
+  };
+
+  // 查詢特定日期的任務記錄
+  const loadTasksByDate = async (dateString: string) => {
+    if (!userId) return;
+
+    try {
+      const q = query(
+        collection(db, 'learningSessions'),
+        where('userId', '==', userId),
+        where('date', '==', dateString)
+      );
+      const querySnapshot = await getDocs(q);
+      const tasks: Array<{
+        taskName: string;
+      }> = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        tasks.push({
+          taskName: data.taskName || '（未記錄任務名稱）'
+        });
+      });
+
+      setSelectedDateRecords({
+        date: dateString,
+        tasks: tasks
+      });
+    } catch (error) {
+      console.error('載入任務記錄失敗:', error);
+    }
+  };
 
   // 檢查用戶是否已填寫事前問卷
   const checkSurveyStatus = useCallback(async (userId: string) => {
@@ -411,7 +472,7 @@ export default function Home() {
   };
 
   // 記錄學習會話
-  const recordLearningSession = async () => {
+  const recordLearningSession = async (taskName?: string) => {
     if (!sessionStartTime || !content || !userId) return;
 
     // 防止重複記錄 - 使用 ref 檢查
@@ -434,7 +495,9 @@ export default function Home() {
         userId: userId,
         date: now.toISOString().split('T')[0], // YYYY-MM-DD
         wordsGenerated: parsedWords.length,
-        wordsSaved: savedWords.size
+        wordsSaved: savedWords.size,
+        taskName: taskName || '',
+        timestamp: now.toISOString()
       };
 
       await addDoc(collection(db, 'learningSessions'), sessionData);
@@ -498,7 +561,9 @@ export default function Home() {
 
   const clearContent = async () => {
     // 記錄學習會話（如果有進行中的會話）
-    await recordLearningSession();
+    if (currentTaskName) {
+      await recordLearningSession(currentTaskName);
+    }
 
     setContent(null);
     setParsedWords([]);
@@ -508,21 +573,28 @@ export default function Home() {
     sessionRecorded.current = false; // 重置記錄標記
     setSelectedDate(getTodayDate());
     setSelectedCategory('');
+    setCurrentTaskName('');
   };
 
   // 處理日曆日期點擊
-  const handleDateClick = (date: Date) => {
+  const handleDateClick = async (date: Date) => {
     // 格式化日期為 YYYY-MM-DD
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const dateString = `${year}-${month}-${day}`;
-    
+
     // 設置選中的日期
     setSelectedDate(dateString);
-    
-    // 開啟任務抽屜
-    setIsTaskDrawerOpen(true);
+
+    // 檢查這個日期是否有記錄
+    if (datesWithRecords.has(dateString)) {
+      // 有記錄，載入並顯示歷史任務
+      await loadTasksByDate(dateString);
+    } else {
+      // 沒有記錄，開啟任務抽屜建立新任務
+      setIsTaskDrawerOpen(true);
+    }
   };
 
   // 處理任務提交
@@ -542,8 +614,8 @@ export default function Home() {
     `.trim();
 
     // 先記錄舊的會話（如果存在）
-    if (sessionStartTime && content && !sessionRecorded.current) {
-      await recordLearningSession();
+    if (sessionStartTime && content && !sessionRecorded.current && currentTaskName) {
+      await recordLearningSession(currentTaskName);
     }
 
     // 先關閉抽屜，讓用戶看到 loading 動畫
@@ -587,6 +659,7 @@ export default function Home() {
 
         // 更新任務相關狀態
         setSelectedCategory(category); // 更新分類，用於保存單字時記錄
+        setCurrentTaskName(name);
 
         // 開始學習會話時間記錄
         setSessionStartTime(new Date());
@@ -596,9 +669,14 @@ export default function Home() {
         // 增加使用次數
         incrementParticipantUsage();
 
+        // 更新有記錄的日期
+        if (userId) {
+          loadRecordDates(userId);
+        }
+
         // 等待一下讓內容渲染完成，然後滾動到內容區域
         setTimeout(() => {
-          contentRef.current?.scrollIntoView({ 
+          contentRef.current?.scrollIntoView({
             behavior: 'smooth',
             block: 'start'
           });
@@ -711,7 +789,7 @@ export default function Home() {
 
         {/* 小版日曆 */}
         <div id="mini-calendar" className="mb-6">
-          <MiniCalendar onDateClick={handleDateClick} />
+          <MiniCalendar onDateClick={handleDateClick} datesWithRecords={datesWithRecords} />
         </div>
 
         {/* 空狀態提示 - 當沒有任務記錄且不在載入中時顯示 */}
@@ -1061,6 +1139,51 @@ export default function Home() {
               <p className="text-gray-700 text-sm">
                 預計需要 30-60 秒，請稍候
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* 任務歷史記錄彈窗 */}
+        {selectedDateRecords && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedDateRecords(null)}>
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">學習記錄</h2>
+                    <p className="text-gray-700 text-sm mt-1">{selectedDateRecords.date}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedDateRecords(null)}
+                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {selectedDateRecords.tasks.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-700">此日期沒有學習記錄</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedDateRecords.tasks.map((task, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                        <h3 className="text-lg font-bold text-gray-800">{task.taskName}</h3>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setSelectedDateRecords(null)}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    關閉
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
