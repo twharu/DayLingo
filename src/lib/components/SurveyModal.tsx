@@ -578,7 +578,7 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
           {/* 第四題：APP興趣度 */}
           <div>
             <label className="block text-base font-medium text-gray-700 mb-4">
-              如果有一個APP可以根據您的日常任務（如購物、辦手續）自動生成相關日語學習內容，您會有興趣嗎？ <span className="text-red-500">*</span>
+              如果有一個APP可以根據您的日常待辦事項（如購物、辦手續）自動生成相關日語學習內容，您會有興趣嗎？ <span className="text-red-500">*</span>
             </label>
             <div className="space-y-2">
               {[

@@ -5,6 +5,7 @@ import { collection, getDocs, deleteDoc, doc, query, where } from 'firebase/fire
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
 
 interface SavedWord {
@@ -21,26 +22,29 @@ interface SavedWord {
   dialogueB?: string;
   dialogueBTranslation?: string;
   category?: string;
+  taskId?: string;
+  taskName?: string;
+  date?: string;
   savedAt: string;
 }
 
+interface GroupedWords {
+  [date: string]: {
+    [taskName: string]: SavedWord[];
+  };
+}
+
 export default function VocabularyPage() {
+  const searchParams = useSearchParams();
   const [savedWords, setSavedWords] = useState<SavedWord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
-
-  const categories = [
-    '日常',
-    '購物',
-    '學校',
-    '文件申辦',
-    '工作'
-  ];
+  const [selectedWord, setSelectedWord] = useState<SavedWord | null>(null);
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadSavedWords();
-    
+
     // 預載語音庫
     if ('speechSynthesis' in window) {
       window.speechSynthesis.getVoices();
@@ -49,6 +53,31 @@ export default function VocabularyPage() {
       };
     }
   }, []);
+
+  // 處理 URL 參數，自動展開指定的日期和待辦事項
+  useEffect(() => {
+    if (savedWords.length === 0) return;
+
+    const dateParam = searchParams.get('date');
+    const taskNameParam = searchParams.get('taskName');
+
+    if (dateParam && taskNameParam) {
+      // 自動展開指定的日期
+      setExpandedDates(prev => new Set(prev).add(dateParam));
+
+      // 自動展開指定的待辦事項
+      const taskKey = `${dateParam}-${taskNameParam}`;
+      setExpandedTasks(prev => new Set(prev).add(taskKey));
+
+      // 滾動到對應位置（延遲一下確保DOM已渲染）
+      setTimeout(() => {
+        const taskElement = document.querySelector(`[data-task-key="${taskKey}"]`);
+        if (taskElement) {
+          taskElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+  }, [savedWords, searchParams]);
 
   const loadSavedWords = async () => {
     try {
@@ -71,13 +100,59 @@ export default function VocabularyPage() {
       querySnapshot.forEach((doc) => {
         words.push({ id: doc.id, ...doc.data() } as SavedWord);
       });
-      // 按儲存時間排序（最新的在前）
-      words.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+      // 按日期排序（最新的在前）
+      words.sort((a, b) => {
+        const dateA = a.date || a.savedAt.split('T')[0];
+        const dateB = b.date || b.savedAt.split('T')[0];
+        return dateB.localeCompare(dateA);
+      });
       setSavedWords(words);
     } catch (error) {
       console.error('載入單字失敗:', error);
     }
     setLoading(false);
+  };
+
+  // 將單字按日期和待辦事項分組
+  const groupWordsByDateAndTask = (): GroupedWords => {
+    const grouped: GroupedWords = {};
+
+    savedWords.forEach(word => {
+      const date = word.date || word.savedAt.split('T')[0];
+      const taskName = word.taskName || '未分類';
+
+      if (!grouped[date]) {
+        grouped[date] = {};
+      }
+
+      if (!grouped[date][taskName]) {
+        grouped[date][taskName] = [];
+      }
+
+      grouped[date][taskName].push(word);
+    });
+
+    return grouped;
+  };
+
+  const toggleDate = (date: string) => {
+    const newExpanded = new Set(expandedDates);
+    if (newExpanded.has(date)) {
+      newExpanded.delete(date);
+    } else {
+      newExpanded.add(date);
+    }
+    setExpandedDates(newExpanded);
+  };
+
+  const toggleTask = (dateTask: string) => {
+    const newExpanded = new Set(expandedTasks);
+    if (newExpanded.has(dateTask)) {
+      newExpanded.delete(dateTask);
+    } else {
+      newExpanded.add(dateTask);
+    }
+    setExpandedTasks(newExpanded);
   };
 
   const preprocessJapaneseText = (text: string) => {
@@ -232,64 +307,11 @@ export default function VocabularyPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Link 
-                href="/"
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                回到首頁
-              </Link>
               <HamburgerMenu />
             </div>
           </div>
         </header>
 
-        {/* 分類選擇器 */}
-        {savedWords.length > 0 && (
-          <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">按分類瀏覽</h2>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedCategory('all')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedCategory === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                全部 ({savedWords.length})
-              </button>
-              {categories.map(category => {
-                const count = savedWords.filter(word => word.category === category).length;
-                if (count === 0) return null;
-                return (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-lg transition-colors ${
-                      selectedCategory === category
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {category} ({count})
-                  </button>
-                );
-              })}
-              {savedWords.filter(word => !word.category || !categories.includes(word.category)).length > 0 && (
-                <button
-                  onClick={() => setSelectedCategory('uncategorized')}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    selectedCategory === 'uncategorized'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  未分類 ({savedWords.filter(word => !word.category || !categories.includes(word.category)).length})
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
         {savedWords.length === 0 ? (
           <div className="bg-white rounded-lg shadow-lg p-8 text-center">
@@ -298,114 +320,165 @@ export default function VocabularyPage() {
             <p className="text-gray-700 mb-6">
               開始學習並收藏你喜歡的單字吧！
             </p>
-            <Link 
-              href="/"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block"
-            >
-              開始學習
-            </Link>
           </div>
         ) : (
           <>
-            {/* 卡片網格 */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {(() => {
-                  const filteredWords = selectedCategory === 'all'
-                    ? savedWords
-                    : selectedCategory === 'uncategorized'
-                      ? savedWords.filter(word => !word.category || !categories.includes(word.category))
-                      : savedWords.filter(word => word.category === selectedCategory);
+            {/* 按日期和待辦事項分組顯示 */}
+            <div className="space-y-4">
+              {(() => {
+                const grouped = groupWordsByDateAndTask();
+                const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
-                  return filteredWords.map((word, index) => (
-                    <div
-                      key={word.id}
-                      className="relative border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors cursor-pointer min-h-[120px] flex items-center justify-center"
-                      onClick={() => setSelectedWordIndex(index)}
-                    >
-                      {/* 刪除按鈕 */}
+                return dates.map(date => {
+                  const isDateExpanded = expandedDates.has(date);
+                  const tasks = grouped[date];
+                  const taskNames = Object.keys(tasks);
+                  const wordCount = taskNames.reduce((sum, taskName) => sum + tasks[taskName].length, 0);
+
+                  return (
+                    <div key={date} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                      {/* 日期標題 */}
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteWord(word.id);
-                        }}
-                        className="absolute top-1 right-1 text-red-500 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-red-50"
-                        title="刪除單字"
+                        onClick={() => toggleDate(date)}
+                        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                       >
-                        <Image
-                          src="/icons/delete.svg"
-                          alt="刪除"
-                          width={14}
-                          height={14}
-                        />
+                        <div className="flex items-center space-x-3">
+                          <svg
+                            className={`w-5 h-5 text-gray-600 transition-transform ${isDateExpanded ? 'rotate-90' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                          <h3 className="text-lg font-semibold text-gray-800">{date}</h3>
+                        </div>
+                        <span className="text-sm text-gray-600">{wordCount} 個單字</span>
                       </button>
 
-                      {/* 分類標籤 */}
-                      {word.category && (
-                        <span className="absolute top-1 left-1 bg-green-100 text-green-800 text-xs font-medium px-1.5 py-0.5 rounded">
-                          {word.category}
-                        </span>
-                      )}
+                      {/* 待辦事項列表 */}
+                      {isDateExpanded && (
+                        <div className="border-t border-gray-200">
+                          {taskNames.map(taskName => {
+                            const taskKey = `${date}-${taskName}`;
+                            const isTaskExpanded = expandedTasks.has(taskKey);
+                            const words = tasks[taskName];
 
-                      <div className="text-center w-full mt-6">
-                        <p className="text-blue-600 font-medium mb-1 flex items-center justify-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              playSound(word.reading);
-                            }}
-                            className="mr-1 hover:scale-110 transition-transform p-0.5 rounded-full hover:bg-blue-100"
-                            title="播放讀音"
-                          >
-                            <Image
-                              src="/icons/volume.svg"
-                              alt="播放讀音"
-                              width={12}
-                              height={12}
-                            />
-                          </button>
-                          <span className="text-xs">{word.reading}</span>
-                        </p>
-                        <h3 className="text-lg font-bold text-gray-800 mb-2">
-                          {word.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
-                        </h3>
-                        <p className="text-xs text-gray-700 line-clamp-2">{word.meaning}</p>
-                      </div>
+                            return (
+                              <div key={taskKey} data-task-key={taskKey} className="border-b border-gray-100 last:border-b-0">
+                                {/* 待辦事項標題 */}
+                                <button
+                                  onClick={() => toggleTask(taskKey)}
+                                  className="w-full p-4 pl-12 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <svg
+                                      className={`w-4 h-4 text-gray-600 transition-transform ${isTaskExpanded ? 'rotate-90' : ''}`}
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                    <h4 className="font-medium text-gray-800">{taskName}</h4>
+                                  </div>
+                                  <span className="text-sm text-gray-600">{words.length} 個單字</span>
+                                </button>
+
+                                {/* 單字卡片 */}
+                                {isTaskExpanded && (
+                                  <div className="p-4 pl-16 bg-gray-50">
+                                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                      {words.map((word) => (
+                                        <div
+                                          key={word.id}
+                                          className="relative border border-gray-200 bg-white rounded-lg p-3 hover:border-blue-300 transition-colors cursor-pointer min-h-[120px] flex items-center justify-center"
+                                          onClick={() => setSelectedWord(word)}
+                                        >
+                                          {/* 刪除按鈕 */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deleteWord(word.id);
+                                            }}
+                                            className="absolute top-1 right-1 text-red-500 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-red-50"
+                                            title="刪除單字"
+                                          >
+                                            <Image
+                                              src="/icons/delete.svg"
+                                              alt="刪除"
+                                              width={14}
+                                              height={14}
+                                            />
+                                          </button>
+
+                                          {/* 分類標籤 */}
+                                          {word.category && (
+                                            <span className="absolute top-1 left-1 bg-green-100 text-green-800 text-xs font-medium px-1.5 py-0.5 rounded">
+                                              {word.category}
+                                            </span>
+                                          )}
+
+                                          <div className="text-center w-full mt-6">
+                                            <p className="text-blue-600 font-medium mb-1 flex items-center justify-center">
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  playSound(word.reading);
+                                                }}
+                                                className="mr-1 hover:scale-110 transition-transform p-0.5 rounded-full hover:bg-blue-100"
+                                                title="播放讀音"
+                                              >
+                                                <Image
+                                                  src="/icons/volume.svg"
+                                                  alt="播放讀音"
+                                                  width={12}
+                                                  height={12}
+                                                />
+                                              </button>
+                                              <span className="text-xs">{word.reading}</span>
+                                            </p>
+                                            <h3 className="text-lg font-bold text-gray-800 mb-2">
+                                              {word.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
+                                            </h3>
+                                            <p className="text-xs text-gray-700 line-clamp-2">{word.meaning}</p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  ));
-                })()}
-              </div>
+                  );
+                });
+              })()}
             </div>
 
             {/* 單字詳細彈窗 */}
-            {selectedWordIndex !== null && (() => {
-              const filteredWords = selectedCategory === 'all'
-                ? savedWords
-                : selectedCategory === 'uncategorized'
-                  ? savedWords.filter(word => !word.category || !categories.includes(word.category))
-                  : savedWords.filter(word => word.category === selectedCategory);
-
-              const word = filteredWords[selectedWordIndex];
-
-              return word ? (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedWordIndex(null)}>
+            {selectedWord && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedWord(null)}>
                   <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-3">
-                          {word.category && (
+                          {selectedWord.category && (
                             <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                              {word.category}
+                              {selectedWord.category}
                             </span>
                           )}
                         </div>
                         <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                          {word.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
+                          {selectedWord.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
                         </h3>
-                        <p className="text-lg text-gray-700 mb-3">{word.meaning}</p>
+                        <p className="text-lg text-gray-700 mb-3">{selectedWord.meaning}</p>
                         <p className="text-blue-600 font-medium flex items-center">
                           <button
-                            onClick={() => playSound(word.reading)}
+                            onClick={() => playSound(selectedWord.reading)}
                             className="mr-2 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
                             title="播放讀音"
                           >
@@ -416,24 +489,24 @@ export default function VocabularyPage() {
                               height={18}
                             />
                           </button>
-                          {word.reading}
+                          {selectedWord.reading}
                         </p>
                       </div>
                       <button
-                        onClick={() => setSelectedWordIndex(null)}
+                        onClick={() => setSelectedWord(null)}
                         className="text-gray-400 hover:text-gray-600 text-2xl"
                       >
                         ×
                       </button>
                     </div>
 
-                    {word.example && (
+                    {selectedWord.example && (
                       <div className="bg-gray-50 p-4 rounded-lg mb-4">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium text-gray-800">例句：</h4>
                           <button
                             onClick={() => {
-                              let cleanExample = word.example;
+                              let cleanExample = selectedWord.example;
                               cleanExample = cleanExample.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
                               cleanExample = cleanExample.replace(/<[^>]*>/g, '');
                               playSound(cleanExample);
@@ -452,21 +525,21 @@ export default function VocabularyPage() {
                         <p className="text-gray-800 text-lg leading-relaxed mb-2">
                           <span
                             className="ruby-content"
-                            dangerouslySetInnerHTML={{ __html: word.example }}
+                            dangerouslySetInnerHTML={{ __html: selectedWord.example }}
                             style={{ fontSize: '18px', lineHeight: '2' }}
                           />
                         </p>
-                        <p className="text-gray-700">{word.exampleTranslation}</p>
+                        <p className="text-gray-700">{selectedWord.exampleTranslation}</p>
                       </div>
                     )}
 
-                    {word.phrase && (
+                    {selectedWord.phrase && (
                       <div className="bg-blue-50 p-4 rounded-lg mb-4">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium text-gray-800">相關詞組：</h4>
                           <button
                             onClick={() => {
-                              let cleanPhrase = word.phrase || '';
+                              let cleanPhrase = selectedWord.phrase || '';
                               cleanPhrase = cleanPhrase.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
                               cleanPhrase = cleanPhrase.replace(/<[^>]*>/g, '');
                               playSound(cleanPhrase);
@@ -485,15 +558,15 @@ export default function VocabularyPage() {
                         <p className="text-gray-800 text-lg leading-relaxed mb-2">
                           <span
                             className="ruby-content"
-                            dangerouslySetInnerHTML={{ __html: word.phrase }}
+                            dangerouslySetInnerHTML={{ __html: selectedWord.phrase }}
                             style={{ fontSize: '18px', lineHeight: '2' }}
                           />
                         </p>
-                        <p className="text-gray-700">{word.phraseTranslation}</p>
+                        <p className="text-gray-700">{selectedWord.phraseTranslation}</p>
                       </div>
                     )}
 
-                    {word.dialogueA && word.dialogueB && (
+                    {selectedWord.dialogueA && selectedWord.dialogueB && (
                       <div className="bg-purple-50 p-4 rounded-lg mb-4">
                         <h4 className="font-medium text-gray-800 mb-3">對話練習：</h4>
                         <div className="space-y-3">
@@ -502,7 +575,7 @@ export default function VocabularyPage() {
                               <span className="text-sm font-medium text-purple-600">A:</span>
                               <button
                                 onClick={() => {
-                                  let cleanDialogueA = word.dialogueA || '';
+                                  let cleanDialogueA = selectedWord.dialogueA || '';
                                   cleanDialogueA = cleanDialogueA.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
                                   cleanDialogueA = cleanDialogueA.replace(/<[^>]*>/g, '');
                                   playSound(cleanDialogueA);
@@ -521,18 +594,18 @@ export default function VocabularyPage() {
                             <p className="text-gray-800 mb-1 leading-relaxed">
                               <span
                                 className="ruby-content"
-                                dangerouslySetInnerHTML={{ __html: word.dialogueA }}
+                                dangerouslySetInnerHTML={{ __html: selectedWord.dialogueA }}
                                 style={{ fontSize: '16px', lineHeight: '1.8' }}
                               />
                             </p>
-                            <p className="text-gray-700 text-sm">{word.dialogueATranslation}</p>
+                            <p className="text-gray-700 text-sm">{selectedWord.dialogueATranslation}</p>
                           </div>
                           <div className="bg-white p-3 rounded">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-sm font-medium text-purple-600">B:</span>
                               <button
                                 onClick={() => {
-                                  let cleanDialogueB = word.dialogueB || '';
+                                  let cleanDialogueB = selectedWord.dialogueB || '';
                                   cleanDialogueB = cleanDialogueB.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
                                   cleanDialogueB = cleanDialogueB.replace(/<[^>]*>/g, '');
                                   playSound(cleanDialogueB);
@@ -551,32 +624,32 @@ export default function VocabularyPage() {
                             <p className="text-gray-800 mb-1 leading-relaxed">
                               <span
                                 className="ruby-content"
-                                dangerouslySetInnerHTML={{ __html: word.dialogueB }}
+                                dangerouslySetInnerHTML={{ __html: selectedWord.dialogueB }}
                                 style={{ fontSize: '16px', lineHeight: '1.8' }}
                               />
                             </p>
-                            <p className="text-gray-700 text-sm">{word.dialogueBTranslation}</p>
+                            <p className="text-gray-700 text-sm">{selectedWord.dialogueBTranslation}</p>
                           </div>
                         </div>
                       </div>
                     )}
 
                     <div className="text-xs text-gray-500 mb-4">
-                      收藏時間：{new Date(word.savedAt).toLocaleString('zh-TW')}
+                      收藏時間：{new Date(selectedWord.savedAt).toLocaleString('zh-TW')}
                     </div>
 
                     <div className="flex gap-3">
                       <button
                         onClick={() => {
-                          deleteWord(word.id);
-                          setSelectedWordIndex(null);
+                          deleteWord(selectedWord.id);
+                          setSelectedWord(null);
                         }}
                         className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                       >
                         刪除這個單字
                       </button>
                       <button
-                        onClick={() => setSelectedWordIndex(null)}
+                        onClick={() => setSelectedWord(null)}
                         className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         關閉
@@ -584,20 +657,9 @@ export default function VocabularyPage() {
                     </div>
                   </div>
                 </div>
-              ) : null;
-            })()}
+            )}
           </>
         )}
-
-        {/* 底部返回按鈕 */}
-        <div className="bg-white rounded-lg shadow-lg p-6 text-center mt-8">
-          <Link
-            href="/"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            回到首頁
-          </Link>
-        </div>
       </div>
     </div>
   );

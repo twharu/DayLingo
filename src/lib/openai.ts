@@ -49,16 +49,16 @@ B: すみません、これはいくらですか。
   }
 
   try {
-    // 解析任務資料
+    // 解析待辦事項資料
     const lines = taskData.split('\n');
     const dateMatch = lines.find(line => line.includes('日期:'));
     const categoryMatch = lines.find(line => line.includes('分類:'));
-    const nameMatch = lines.find(line => line.includes('任務名稱:'));
+    const nameMatch = lines.find(line => line.includes('待辦事項名稱:'));
     const descMatch = lines.find(line => line.includes('詳細描述:'));
 
     const selectedDate = dateMatch?.split('日期:')[1]?.trim() || '';
     const category = categoryMatch?.split('分類:')[1]?.trim() || '';
-    const title = nameMatch?.split('任務名稱:')[1]?.trim() || '';
+    const title = nameMatch?.split('待辦事項名稱:')[1]?.trim() || '';
     const description = descMatch?.split('詳細描述:')[1]?.trim() || '';
 
     const completion = await openai.chat.completions.create({
@@ -70,12 +70,12 @@ B: すみません、これはいくらですか。
         },
         {
           role: "user",
-          content: `請為以下任務生成日語學習內容：
+          content: `請為以下待辦事項生成日語學習內容：
 
-任務資訊：
+待辦事項資訊：
 - 日期：${selectedDate}
 - 分類：${category}
-- 任務名稱：${title}
+- 待辦事項名稱：${title}
 - 詳細描述：${description}
 
 ## 關聯單字
@@ -85,8 +85,8 @@ B: すみません、これはいくらですか。
 
 **🎯 核心要求：具體化、細分化、實用化、多樣化**
 
-1. **深度分析任務並細分類別**：
-   - 仔細分析任務描述中的每個關鍵詞，並列出該類別下的**具體產品/具體類型**
+1. **深度分析待辦事項並細分類別**：
+   - 仔細分析待辦事項描述中的每個關鍵詞，並列出該類別下的**具體產品/具體類型**
 
    **重要：要列出具體的產品名稱，不要只列籠統的分類詞，並且要包含外來語**
 
@@ -112,7 +112,7 @@ B: すみません、これはいくらですか。
      * ボディソープ（body soap 沐浴乳）【外來語】
 
 2. **選詞標準**：
-   - ✅ 必須是該任務會直接購買/使用的**具體產品名稱**
+   - ✅ 必須是該待辦事項會直接購買/使用的**具體產品名稱**
    - ✅ 使用 JLPT N2-N1 程度的實用詞彙，包含專業術語
    - ✅ 每個關鍵詞要深入挖掘，列出 3-4 個相關的具體產品
    - ✅ **必須包含外來語（カタカナ）詞彙，12個單字中至少4-5個是外來語**
@@ -164,7 +164,7 @@ B: はい、30%オフです。 - 有的，打七折。
 
 ## 日常對話
 
-生成2-3句與任務相關的實用對話，使用${getCategoryContext(category)}：
+生成2-3句與待辦事項相關的實用對話，使用${getCategoryContext(category)}：
 - 每句對話格式：日文句子 - 中文翻譯
 - 使用丁寧體
 - 所有漢字必須標注讀音`

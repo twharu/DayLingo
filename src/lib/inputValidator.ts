@@ -136,7 +136,7 @@ const sanitizeInput = (input: string): string => {
 };
 
 /**
- * 驗證任務名稱
+ * 驗證待辦事項名稱
  */
 export const validateTaskName = (taskName: string): ValidationResult => {
   // 先清理輸入
@@ -189,7 +189,7 @@ export const validateTaskName = (taskName: string): ValidationResult => {
 };
 
 /**
- * 驗證任務描述
+ * 驗證待辦事項描述
  */
 export const validateTaskDescription = (description: string): ValidationResult => {
   // 先清理輸入

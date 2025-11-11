@@ -80,6 +80,12 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
       taskName: nameValidation.sanitized!,
       taskDescription: descriptionValidation.sanitized!
     });
+
+    // 提交成功後，清空表單
+    setSelectedCategory('');
+    setTaskName('');
+    setTaskDescription('');
+    setErrors({});
   };
 
   const handleClose = () => {
@@ -149,7 +155,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               )}
             </div>
 
-            {/* 2. 任務分類標籤 */}
+            {/* 2. 待辦事項分類標籤 */}
             <div>
               <label htmlFor="category" className="block text-lg font-medium text-gray-700 mb-3">
                 待辦事項分類 <span className="text-red-500">*</span>
@@ -182,7 +188,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               )}
             </div>
 
-            {/* 3. 任務名稱 */}
+            {/* 3. 待辦事項名稱 */}
             <div>
               <label htmlFor="taskName" className="block text-lg font-medium text-gray-700 mb-3">
                 待辦事項 <span className="text-red-500">*</span>
@@ -211,7 +217,7 @@ export default function TaskDrawer({ isOpen, onClose, selectedDate, onSubmit, lo
               <p className="mt-1 text-xs text-gray-700">1-100 字元</p>
             </div>
 
-            {/* 4. 任務詳細描述 */}
+            {/* 4. 待辦事項詳細描述 */}
             <div>
               <label htmlFor="taskDescription" className="block text-lg font-medium text-gray-700 mb-3">
                 待辦事項描述 <span className="text-red-500">*</span>

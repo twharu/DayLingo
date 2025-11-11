@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
 
     if (!task) {
       return NextResponse.json(
-        { error: '請提供任務內容' },
+        { error: '請提供待辦事項內容' },
         { status: 400 }
       );
     }

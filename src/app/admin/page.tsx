@@ -260,7 +260,7 @@ export default function AdminPage() {
             <div className="bg-green-50 p-6 rounded-lg">
               <h3 className="text-lg font-semibold text-green-800 mb-4">學習會話數據</h3>
               <p className="text-green-600 mb-4 text-sm">
-                匯出使用時間、學習任務、詞彙使用等行為數據
+                匯出使用時間、學習待辦事項、詞彙使用等行為數據
               </p>
               <button
                 onClick={exportSessionData}

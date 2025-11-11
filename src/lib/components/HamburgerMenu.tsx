@@ -103,20 +103,8 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
 
             {/* 選單項目 */}
             <nav className="p-6 space-y-4">
-              <Link 
+              <Link
                 href="/"
-                className="block p-4 rounded-lg transition-all duration-200 hover:bg-blue-50 relative group"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
-                <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                <div className="relative">
-                  <h3 className="font-medium text-gray-800">首頁</h3>
-                </div>
-              </Link>
-              
-              <Link 
-                href="/essential-words"
                 className="block p-4 rounded-lg transition-all duration-200 hover:bg-purple-50 relative group"
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -126,6 +114,36 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
                   <h3 className="font-medium text-gray-800">新手必備</h3>
                 </div>
               </Link>
+
+              {hasContent ? (
+                <button
+                  onClick={() => {
+                    if (onClearContent) {
+                      onClearContent();
+                    }
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full p-4 rounded-lg transition-all duration-200 hover:bg-blue-50 relative group text-left"
+                >
+                  <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
+                  <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                  <div className="relative">
+                    <h3 className="font-medium text-gray-800">每日學習</h3>
+                  </div>
+                </button>
+              ) : (
+                <Link
+                  href="/daily-learning"
+                  className="block p-4 rounded-lg transition-all duration-200 hover:bg-blue-50 relative group"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
+                  <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                  <div className="relative">
+                    <h3 className="font-medium text-gray-800">每日學習</h3>
+                  </div>
+                </Link>
+              )}
               
               <Link
                 href="/vocabulary"
