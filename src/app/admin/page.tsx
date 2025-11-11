@@ -36,7 +36,7 @@ interface ReportedContribution {
     id: string;
     reportedBy: string;
     reason: string;
-    reportedAt: any;
+    reportedAt: string | { seconds: number; nanoseconds: number };
   }>;
 }
 
@@ -151,8 +151,8 @@ export default function AdminPage() {
 
         reported.push({
           contributionId: contributionDoc.id,
-          contribution: contribution as any,
-          reports: reports as any
+          contribution: contribution as ReportedContribution['contribution'],
+          reports: reports as ReportedContribution['reports']
         });
       }
 

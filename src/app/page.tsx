@@ -274,7 +274,7 @@ interface CommunityContribution {
   };
   reportCount: number;
   isHidden: boolean;
-  createdAt: any;
+  createdAt: string | { seconds: number; nanoseconds: number };
 }
 
 export default function EssentialWords() {
@@ -379,14 +379,12 @@ export default function EssentialWords() {
     }
   };
 
-  // 編輯自己的貢獻
-  const handleEdit = (contribution: CommunityContribution) => {
-    // 這裡需要實現編輯功能，可以重用 ContributionModal
-    // 先簡單實作：開啟 modal 並預填資料
-    setModalType(contribution.type);
-    setModalOpen(true);
-    // TODO: 需要擴展 modal 來支援編輯模式
-  };
+  // 編輯自己的貢獻（未來功能）
+  // const handleEdit = (contribution: CommunityContribution) => {
+  //   setModalType(contribution.type);
+  //   setModalOpen(true);
+  //   // TODO: 需要擴展 modal 來支援編輯模式
+  // };
 
   // 檢查是否為當前使用者的貢獻
   const isOwnContribution = (contribution: CommunityContribution): boolean => {
@@ -399,6 +397,7 @@ export default function EssentialWords() {
     if (selectedCategory) {
       loadCommunityContributions();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   const preprocessJapaneseText = (text: string) => {
@@ -514,7 +513,7 @@ export default function EssentialWords() {
     }
   };
 
-  const handleUserRegistrationComplete = (newUserId: string) => {
+  const handleUserRegistrationComplete = () => {
     // AuthContext 會自動處理，這裡只需要關閉 modal
     setShowUserRegistration(false);
   };

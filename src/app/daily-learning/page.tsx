@@ -53,7 +53,6 @@ export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  const [showPostSurvey, setShowPostSurvey] = useState(false);
   const [isTaskDrawerOpen, setIsTaskDrawerOpen] = useState(false);
   const [tasks, setTasks] = useState<Array<{
     id: string;
