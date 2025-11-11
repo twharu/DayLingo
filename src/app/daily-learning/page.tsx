@@ -29,6 +29,7 @@ export default function Home() {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [currentTaskName, setCurrentTaskName] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [content, setContent] = useState<{content: string} | null>(null);
   const [parsedWords, setParsedWords] = useState<{
     word: string,
@@ -182,48 +183,87 @@ export default function Home() {
     let currentSection = '';
 
     console.log('🔍 開始解析，總共', lines.length, '行');
+    console.log('📄 前10行內容:', lines.slice(0, 10));
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
 
-      // 檢查區塊標題
-      if (line.includes('關聯單字') || line.includes('## 關聯單字') || line.includes('### 單字列表') || line.includes('單字列表')) {
+      if (i < 15) {
+        console.log(`第 ${i} 行: "${line}"`);
+      }
+
+      // 檢查區塊標題（更靈活的匹配規則）
+      if (line.includes('關聯單字') ||
+          line.includes('單字列表') ||
+          line.includes('專有詞彙') ||
+          line.includes('符合待辦事項') ||
+          (line.startsWith('##') && (line.includes('單字') || line.includes('詞彙'))) ||
+          (line.startsWith('###') && (line.includes('單字') || line.includes('詞彙')))) {
         currentSection = 'words';
-        console.log('✅ 找到關聯單字區塊');
+        console.log('✅ 找到單字區塊:', line);
         continue;
       }
 
-      if (line.includes('## 日常對話') || line.includes('### 日常對話')) {
-        currentSection = '';
-        console.log('✅ 找到日常對話區塊，停止解析單字');
-        continue;
-      }
+      // 移除日常對話區塊檢查，因為已經不生成了
+      // if (line.includes('## 日常對話') || line.includes('### 日常對話')) {
+      //   currentSection = '';
+      //   console.log('✅ 找到日常對話區塊，停止解析單字');
+      //   continue;
+      // }
 
       // 解析單字（支持 "1." 或 "### 1." 格式）
-      // 如果遇到 ### 1. 格式，自動進入 words section
-      if (line.match(/^###\s*1\./)) {
+      // 如果遇到 1. 格式，自動進入 words section
+      if (line.match(/^(###\s*)?1\./)) {
         currentSection = 'words';
-        console.log('✅ 自動檢測到單字區塊開始 (### 1. 格式)');
+        console.log('✅ 自動檢測到單字區塊開始');
       }
 
       if (currentSection === 'words' && line.match(/^(###\s*)?\d+\./)) {
         // 移除數字編號和可能的 ### 前綴
         const cleanLine = line.replace(/^###\s*\d+\.\s*/, '').replace(/^\d+\.\s*/, '');
+        console.log('🔍 處理單字行:', cleanLine);
         const wordMatch = cleanLine.match(/^(.+?)\s*-\s*(.+)$/);
 
         if (wordMatch) {
           const [, wordWithRuby, meaning] = wordMatch;
+          console.log('  - 原始單字:', wordWithRuby);
+          console.log('  - 意思:', meaning);
 
           // 提取 ruby 標記中的單字和讀音
-          // 讀音：將所有 <ruby>漢字<rt>讀音</rt></ruby> 替換為「讀音」
-          let reading = wordWithRuby.replace(/<ruby>([^<]+)<rt>([^<]+)<\/rt><\/ruby>/g, '$2');
-          // 清理可能遺留的 HTML 標籤
-          reading = reading.replace(/<[^>]*>/g, '');
+          // 讀音：將所有 <ruby>漢字<rt>讀音</rt></ruby> 組合起來
+          const readingParts: string[] = [];
+          const wordParts: string[] = [];
 
-          // 單字：將所有 <ruby>漢字<rt>讀音</rt></ruby> 替換為「漢字」
-          let word = wordWithRuby.replace(/<ruby>([^<]+)<rt>[^<]+<\/rt><\/ruby>/g, '$1');
-          // 清理可能遺留的 HTML 標籤
-          word = word.replace(/<[^>]*>/g, '');
+          // 使用正則表達式匹配所有部分（包含 ruby 標籤和普通文字）
+          const rubyRegex = /<ruby>([^<]+)<rt>([^<]+)<\/rt><\/ruby>/g;
+          let lastIndex = 0;
+          let match;
+
+          while ((match = rubyRegex.exec(wordWithRuby)) !== null) {
+            // 添加 ruby 標籤之前的普通文字
+            if (match.index > lastIndex) {
+              const plainText = wordWithRuby.substring(lastIndex, match.index);
+              wordParts.push(plainText);
+              readingParts.push(plainText);
+            }
+            // 添加 ruby 標籤中的內容
+            wordParts.push(match[1]); // 漢字
+            readingParts.push(match[2]); // 讀音
+            lastIndex = match.index + match[0].length;
+          }
+
+          // 添加最後剩餘的普通文字
+          if (lastIndex < wordWithRuby.length) {
+            const plainText = wordWithRuby.substring(lastIndex);
+            wordParts.push(plainText);
+            readingParts.push(plainText);
+          }
+
+          let word = wordParts.join('').trim();
+          let reading = readingParts.join('').trim();
+
+          console.log('  - 解析後單字:', word);
+          console.log('  - 解析後讀音:', reading);
 
           // 找例句
           let example = '';
@@ -910,8 +950,63 @@ export default function Home() {
                   ))}
                 </div>
 
-                {/* 回到首頁新增其他事項按鈕 */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
+                {/* 按鈕區域 */}
+                <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
+                  {/* 重新生成按鈕 */}
+                  <button
+                    onClick={async () => {
+                      if (!currentTaskName || !selectedCategory) {
+                        alert('無法重新生成，請重新輸入待辦事項');
+                        return;
+                      }
+
+                      const fullTask = `
+日期: ${selectedDate}
+分類: ${selectedCategory}
+待辦事項名稱: ${currentTaskName}
+詳細描述: ${currentTaskName}
+                      `.trim();
+
+                      setRegenerating(true);
+                      try {
+                        const response = await fetch('/api/generate-content', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'x-user-id': userId || '',
+                          },
+                          body: JSON.stringify({ task: fullTask }),
+                        });
+
+                        if (response.ok) {
+                          const data = await response.json();
+                          setContent(data);
+                          parseWords(data.content);
+                          setSavedWords(new Set());
+                        } else {
+                          alert('重新生成失敗');
+                        }
+                      } catch {
+                        alert('發生錯誤，請稍後再試');
+                      }
+                      setRegenerating(false);
+                    }}
+                    disabled={regenerating}
+                    className="w-full bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors font-medium flex items-center justify-center space-x-2 disabled:opacity-50"
+                  >
+                    <svg
+                      className={`w-5 h-5 ${regenerating ? 'animate-spin-reverse' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      style={regenerating ? { animation: 'spin 1s linear infinite reverse' } : {}}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>{regenerating ? '生成中...' : '不滿意？重新生成'}</span>
+                  </button>
+
+                  {/* 新增其他事項按鈕 */}
                   <button
                     onClick={async () => {
                       // 先記錄當前會話

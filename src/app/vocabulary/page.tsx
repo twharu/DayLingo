@@ -330,7 +330,7 @@ function VocabularyContent() {
                 單字庫
               </h1>
               <p className="text-gray-700">
-                已收藏 {savedWords.length} 個單字
+                複習已收藏的單字
               </p>
             </div>
             <div className="flex items-center gap-3">
