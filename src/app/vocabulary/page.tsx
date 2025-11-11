@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { collection, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
@@ -34,7 +33,7 @@ interface GroupedWords {
   };
 }
 
-export default function VocabularyPage() {
+function VocabularyContent() {
   const searchParams = useSearchParams();
   const [savedWords, setSavedWords] = useState<SavedWord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -662,5 +661,22 @@ export default function VocabularyPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VocabularyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="mt-2 text-gray-700">載入單字庫中...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <VocabularyContent />
+    </Suspense>
   );
 }
