@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface ContributionModalProps {
@@ -9,9 +9,10 @@ interface ContributionModalProps {
   onClose: () => void;
   category: string;
   type: 'tip' | 'word' | 'phrase';
+  onSuccess?: () => void;
 }
 
-export default function ContributionModal({ isOpen, onClose, category, type }: ContributionModalProps) {
+export default function ContributionModal({ isOpen, onClose, category, type, onSuccess }: ContributionModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     tip: '',
@@ -53,6 +54,14 @@ export default function ContributionModal({ isOpen, onClose, category, type }: C
         };
       }
 
+      // 檢查是否有重複內容
+      const isDuplicate = await checkDuplicate(content);
+      if (isDuplicate) {
+        alert('此內容已存在，請勿重複新增。');
+        setLoading(false);
+        return;
+      }
+
       // 儲存到 Firebase
       await addDoc(collection(db, 'communityContributions'), {
         userId,
@@ -76,12 +85,62 @@ export default function ContributionModal({ isOpen, onClose, category, type }: C
         translation: ''
       });
 
+      // 通知父組件重新載入資料
+      if (onSuccess) {
+        onSuccess();
+      }
+
       onClose();
     } catch (error) {
       console.error('提交失敗:', error);
       alert('提交失敗，請稍後再試');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 檢查是否有重複內容
+  const checkDuplicate = async (content: Record<string, unknown>): Promise<boolean> => {
+    try {
+      const q = query(
+        collection(db, 'communityContributions'),
+        where('category', '==', category),
+        where('type', '==', type),
+        where('isHidden', '==', false)
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      // 檢查是否有相同內容
+      for (const doc of querySnapshot.docs) {
+        const existingContent = doc.data().content;
+
+        if (type === 'tip') {
+          // 檢查提示是否相同（忽略大小寫和空白）
+          const normalizedNew = (content.tip as string || '').trim().toLowerCase();
+          const normalizedExisting = (existingContent.tip || '').trim().toLowerCase();
+          if (normalizedNew === normalizedExisting) {
+            return true;
+          }
+        } else if (type === 'word') {
+          // 檢查單字是否相同
+          if (content.word === existingContent.word) {
+            return true;
+          }
+        } else if (type === 'phrase') {
+          // 檢查句型是否相同（忽略大小寫和空白）
+          const normalizedNew = (content.phrase as string || '').trim().toLowerCase();
+          const normalizedExisting = (existingContent.phrase || '').trim().toLowerCase();
+          if (normalizedNew === normalizedExisting) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('檢查重複失敗:', error);
+      return false; // 如果檢查失敗，允許送出
     }
   };
 
@@ -146,7 +205,7 @@ export default function ContributionModal({ isOpen, onClose, category, type }: C
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  讀音（平假名/片假名） <span className="text-red-500">*</span>
+                  讀音（平假名） <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"

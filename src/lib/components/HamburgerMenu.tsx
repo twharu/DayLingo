@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface HamburgerMenuProps {
   onClearContent?: () => void;
@@ -10,14 +11,7 @@ interface HamburgerMenuProps {
 
 export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerMenuProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userName, setUserName] = useState('');
-
-  // 載入使用者資訊
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setUserName(localStorage.getItem('userName') || '使用者');
-    }
-  }, []);
+  const { user, logout } = useAuth();
 
   // 根據時間取得問候語
   const getGreeting = () => {
@@ -27,33 +21,6 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
     return 'こんばんは！晚安';
   };
 
-  // 登出功能
-  const handleLogout = () => {
-    if (confirm('確定要登出嗎？')) {
-      // 取得 userId 用於清除相關的動態 key
-      const userId = localStorage.getItem('userId');
-
-      // 清除所有用戶相關的 localStorage 資料
-      localStorage.removeItem('userId');
-      localStorage.removeItem('userName');
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('userPhotoURL');
-      localStorage.removeItem('tourCompleted');
-      localStorage.removeItem('surveyCompleted');
-      localStorage.removeItem('postSurveyCompleted');
-      localStorage.removeItem('localUsageCount');
-
-      // 清除動態 key（如果有 userId）
-      if (userId) {
-        localStorage.removeItem(`postSurveyTriggered_${userId}`);
-        localStorage.removeItem(`usageCount_${userId}`);
-        localStorage.removeItem(`lastUsageCheck_${userId}`);
-      }
-
-      // 強制重新載入頁面（清除快取）
-      window.location.href = window.location.origin;
-    }
-  };
 
   return (
     <>
@@ -97,7 +64,7 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
             <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
               <div>
                 <p className="text-sm text-gray-700 mb-1">{getGreeting()}</p>
-                <p className="text-lg font-bold text-gray-800">{userName}</p>
+                <p className="text-lg font-bold text-gray-800">{user?.userName || '訪客'}</p>
               </div>
             </div>
 
@@ -167,8 +134,7 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
                 <div className="absolute inset-0 bg-orange-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
                 <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                 <div className="relative">
-                  <h3 className="font-medium text-gray-800">使用回饋問卷</h3>
-                  <p className="text-sm text-gray-700">協助我們改進</p>
+                  <h3 className="font-medium text-gray-800">填寫回饋問卷</h3>
                 </div>
               </button>
 
@@ -189,17 +155,34 @@ export default function HamburgerMenu({ onClearContent, hasContent }: HamburgerM
                 </button>
               )}
 
-              {/* 登出按鈕 */}
-              <button
-                onClick={handleLogout}
-                className="w-full p-4 rounded-lg transition-all duration-200 hover:bg-red-50 relative group text-left border-t border-gray-200 mt-4 pt-6"
-              >
-                <div className="absolute inset-0 bg-red-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
-                <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                <div className="relative">
-                  <h3 className="font-medium text-red-600">登出</h3>
-                </div>
-              </button>
+              {/* 登入/登出按鈕 */}
+              {user ? (
+                <button
+                  onClick={logout}
+                  className="w-full p-4 rounded-lg transition-all duration-200 hover:bg-red-50 relative group text-left border-t border-gray-200 mt-4 pt-6"
+                >
+                  <div className="absolute inset-0 bg-red-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
+                  <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                  <div className="relative">
+                    <h3 className="font-medium text-red-600">登出</h3>
+                  </div>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    // 跳轉到首頁，會自動顯示註冊表單
+                    window.location.href = '/';
+                  }}
+                  className="w-full p-4 rounded-lg transition-all duration-200 hover:bg-green-50 relative group text-left border-t border-gray-200 mt-4 pt-6"
+                >
+                  <div className="absolute inset-0 bg-green-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
+                  <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                  <div className="relative">
+                    <h3 className="font-medium text-green-600">登入</h3>
+                    <p className="text-sm text-gray-600">開始使用完整功能</p>
+                  </div>
+                </button>
+              )}
             </nav>
           </div>
         </>

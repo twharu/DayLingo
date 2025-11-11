@@ -10,10 +10,9 @@ import UserRegistration from '@/lib/components/UserRegistration';
 import FirebaseStatus from '@/lib/components/FirebaseStatus';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
 import TaskDrawer from '@/lib/components/TaskDrawer';
-import { useTour } from '@/lib/hooks/useTour';
+import BackButton from '@/lib/components/BackButton';
 
 export default function Home() {
-  const { checkFirstVisit } = useTour();
   const router = useRouter();
   
   // 取得今天的日期並格式化為 YYYY-MM-DD
@@ -136,7 +135,6 @@ export default function Home() {
 
       if (cachedStatus === 'true') {
         console.log('[Survey Check] Using cached status - survey already completed');
-        checkFirstVisit();
         return;
       }
 
@@ -156,8 +154,6 @@ export default function Home() {
           console.log('[Survey Check] Survey document:', doc.id, doc.data());
         });
         localStorage.setItem('surveyCompleted', 'true');
-        // 直接啟動導覽，不顯示問卷
-        checkFirstVisit();
       } else {
         // 用戶未填寫問卷，顯示問卷彈窗
         console.log('[Survey Check] No survey found - showing survey modal');
@@ -169,17 +165,14 @@ export default function Home() {
       console.error('[Survey Check] Error checking survey status:', error);
       // 發生錯誤時，檢查 localStorage
       const cachedStatus = localStorage.getItem('surveyCompleted');
-      if (cachedStatus === 'true') {
-        console.log('[Survey Check] Error occurred but using cached status');
-        checkFirstVisit();
-      } else {
+      if (cachedStatus !== 'true') {
         console.log('[Survey Check] Error occurred and no cache - showing survey');
         setTimeout(() => {
           setShowSurvey(true);
         }, 1000);
       }
     }
-  }, [checkFirstVisit]);
+  }, []);
 
 
   // 移除 beforeunload 處理器，改為在保存單字時記錄會話（更可靠）
@@ -700,22 +693,13 @@ export default function Home() {
         onComplete={() => {
           setShowSurvey(false);
           setShowThankYou(true);
-          // 3秒後自動關閉感謝信息並啟動導覽
+          // 3秒後自動關閉感謝信息
           setTimeout(() => {
             setShowThankYou(false);
-            // 在感謝視窗關閉後啟動網站導覽
-            setTimeout(() => {
-              checkFirstVisit();
-            }, 500);
           }, 3000);
         }}
         onClose={() => {
           setShowSurvey(false);
-          // 即使關閉問卷，也要檢查是否已填寫過（從 Firebase 查到的）
-          const surveyCompleted = localStorage.getItem('surveyCompleted');
-          if (surveyCompleted === 'true') {
-            checkFirstVisit();
-          }
         }}
       />
 
@@ -739,10 +723,6 @@ export default function Home() {
             <button
               onClick={() => {
                 setShowThankYou(false);
-                // 手動關閉感謝視窗時也啟動網站導覽
-                setTimeout(() => {
-                  checkFirstVisit();
-                }, 500);
               }}
               className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
@@ -752,10 +732,13 @@ export default function Home() {
         </div>
       )}
 
-      
+
       <div className="max-w-4xl mx-auto">
         <header className="py-8">
           <div className="flex items-center justify-between">
+            <div className="flex-shrink-0">
+              <BackButton />
+            </div>
             <div className="text-center flex-1">
               <h1 id="app-title" className="text-4xl font-bold text-gray-800 mb-2">
                 每日學習

@@ -5,8 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
 import ContributionModal from '@/lib/components/ContributionModal';
+import UserRegistration from '@/lib/components/UserRegistration';
 import { collection, getDocs, addDoc, serverTimestamp, query, where, increment, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 // 預設情境單字資料
 const essentialWords = {
@@ -280,6 +282,17 @@ export default function EssentialWords() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'tip' | 'word' | 'phrase'>('tip');
   const [communityContributions, setCommunityContributions] = useState<CommunityContribution[]>([]);
+  const [showUserRegistration, setShowUserRegistration] = useState(false);
+  const { user } = useAuth();
+
+  // 檢查用戶登入狀態
+  useEffect(() => {
+    if (!user) {
+      setShowUserRegistration(true);
+    } else {
+      setShowUserRegistration(false);
+    }
+  }, [user]);
 
   const openModal = (type: 'tip' | 'word' | 'phrase') => {
     setModalType(type);
@@ -346,6 +359,39 @@ export default function EssentialWords() {
       console.error('檢舉失敗:', error);
       alert('檢舉失敗，請稍後再試');
     }
+  };
+
+  // 刪除自己的貢獻
+  const handleDelete = async (contributionId: string) => {
+    if (!confirm('確定要刪除這個內容嗎？')) return;
+
+    try {
+      const contributionRef = doc(db, 'communityContributions', contributionId);
+      await updateDoc(contributionRef, {
+        isHidden: true
+      });
+
+      alert('已刪除');
+      loadCommunityContributions(); // 重新載入
+    } catch (error) {
+      console.error('刪除失敗:', error);
+      alert('刪除失敗，請稍後再試');
+    }
+  };
+
+  // 編輯自己的貢獻
+  const handleEdit = (contribution: CommunityContribution) => {
+    // 這裡需要實現編輯功能，可以重用 ContributionModal
+    // 先簡單實作：開啟 modal 並預填資料
+    setModalType(contribution.type);
+    setModalOpen(true);
+    // TODO: 需要擴展 modal 來支援編輯模式
+  };
+
+  // 檢查是否為當前使用者的貢獻
+  const isOwnContribution = (contribution: CommunityContribution): boolean => {
+    const userId = localStorage.getItem('userId');
+    return userId === contribution.userId;
   };
 
   // 當選擇分類時載入社群貢獻
@@ -468,8 +514,19 @@ export default function EssentialWords() {
     }
   };
 
+  const handleUserRegistrationComplete = (newUserId: string) => {
+    // AuthContext 會自動處理，這裡只需要關閉 modal
+    setShowUserRegistration(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-3 sm:p-4">
+      {/* 用戶註冊模態框 */}
+      <UserRegistration
+        isOpen={showUserRegistration}
+        onComplete={handleUserRegistrationComplete}
+      />
+
       <div className="max-w-6xl mx-auto">
         <header className="py-6 sm:py-8">
           <div className="flex items-start justify-between">
@@ -524,41 +581,61 @@ export default function EssentialWords() {
 
               {/* 實用提示 */}
               {essentialWords[selectedCategory as keyof typeof essentialWords].tips && (
-                <div className="bg-blue-50 rounded-lg p-4 sm:p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-bold text-blue-800">
-                      實用提示
-                    </h4>
-                    <button
-                      onClick={() => openModal('tip')}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline"
-                    >
-                      + 補充提示
-                    </button>
-                  </div>
-                  <div className="space-y-2">
+                <div className="bg-blue-50 rounded-lg p-4 sm:p-5 relative">
+                  <h4 className="font-bold text-blue-800 mb-3">
+                    實用提示
+                  </h4>
+                  <div className="space-y-2 mb-4">
                     {essentialWords[selectedCategory as keyof typeof essentialWords].tips.map((tip, index) => (
                       <p key={index} className="text-blue-700 text-sm sm:text-base leading-relaxed">
                         • {tip}
                       </p>
                     ))}
-                    {/* 社群貢獻的提示 */}
-                    {communityContributions
-                      .filter(c => c.type === 'tip')
-                      .map((contribution) => (
-                        <div key={contribution.id} className="flex items-start justify-between gap-2 bg-blue-100 p-2 rounded">
-                          <p className="text-blue-700 text-sm sm:text-base leading-relaxed flex-1">
-                            • {contribution.content.tip} <span className="text-xs text-blue-600">(前輩分享)</span>
-                          </p>
-                          <button
-                            onClick={() => handleReport(contribution.id)}
-                            className="text-red-500 hover:text-red-700 text-xs flex-shrink-0"
-                            title="檢舉"
-                          >
-                            檢舉
-                          </button>
-                        </div>
-                      ))}
+                  </div>
+
+                  {/* 前輩分享子區塊 */}
+                  {communityContributions.filter(c => c.type === 'tip').length > 0 && (
+                    <div className="mt-4 pt-4 border-t-2 border-blue-200">
+                      <h5 className="font-semibold text-blue-700 text-sm mb-2">前輩分享</h5>
+                      <div className="space-y-2">
+                        {communityContributions
+                          .filter(c => c.type === 'tip')
+                          .map((contribution) => (
+                            <div key={contribution.id} className="flex items-start justify-between gap-2 bg-blue-100 p-2 rounded">
+                              <p className="text-blue-700 text-sm sm:text-base leading-relaxed flex-1">
+                                • {contribution.content.tip}
+                              </p>
+                              {isOwnContribution(contribution) ? (
+                                <button
+                                  onClick={() => handleDelete(contribution.id)}
+                                  className="text-red-500 hover:text-red-700 text-xs flex-shrink-0"
+                                  title="刪除"
+                                >
+                                  刪除
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleReport(contribution.id)}
+                                  className="text-red-500 hover:text-red-700 text-xs flex-shrink-0"
+                                  title="檢舉"
+                                >
+                                  檢舉
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 右下角小按鈕 */}
+                  <div className="flex justify-end mt-3">
+                    <button
+                      onClick={() => openModal('tip')}
+                      className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded shadow-sm transition-colors"
+                    >
+                      + 補充提示
+                    </button>
                   </div>
                 </div>
               )}
@@ -566,21 +643,13 @@ export default function EssentialWords() {
 
             {/* 單字列表 */}
             <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8">
-              <div className="mb-4 sm:mb-6 px-2 flex items-start justify-between">
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">常用單字</h3>
-                  <p className="text-gray-700 text-xs sm:text-sm">
-                    點擊喇叭圖示聽讀音
-                  </p>
-                </div>
-                <button
-                  onClick={() => openModal('word')}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline flex-shrink-0 mt-1"
-                >
-                  + 補充單字
-                </button>
+              <div className="mb-4 sm:mb-6 px-2">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">常用單字</h3>
+                <p className="text-gray-700 text-xs sm:text-sm">
+                  點擊喇叭圖示聽讀音
+                </p>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2 mb-4">
                 {essentialWords[selectedCategory as keyof typeof essentialWords].words.map((word, index) => (
                   <div
                     key={index}
@@ -616,72 +685,91 @@ export default function EssentialWords() {
                     </div>
                   </div>
                 ))}
-                {/* 社群貢獻的單字 */}
-                {communityContributions
-                  .filter(c => c.type === 'word')
-                  .map((contribution) => (
-                    <div
-                      key={contribution.id}
-                      className="relative border-2 border-green-200 bg-green-50 rounded-lg p-2 sm:p-3 hover:border-green-300 transition-all duration-200 min-h-[80px] sm:min-h-[90px] flex flex-col justify-center"
-                    >
-                      <button
-                        onClick={() => handleReport(contribution.id)}
-                        className="absolute top-1 right-1 text-red-500 hover:text-red-700 text-xs"
-                        title="檢舉"
-                      >
-                        檢舉
-                      </button>
-                      <div className="text-center">
-                        <span className="text-xs text-green-600 block mb-1">前輩分享</span>
-                        <h4 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-1 leading-tight">
-                          {contribution.content.word}
-                        </h4>
-                        <div className="flex items-center justify-center mb-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              playSound(contribution.content.reading || '');
-                            }}
-                            className="mr-1 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
-                            title="播放讀音"
-                          >
-                            <Image
-                              src="/icons/volume.svg"
-                              alt="播放讀音"
-                              width={12}
-                              height={12}
-                            />
-                          </button>
-                          <p className="text-blue-600 font-semibold text-sm sm:text-base">
-                            {contribution.content.reading}
-                          </p>
+              </div>
+
+              {/* 前輩分享子區塊 */}
+              {communityContributions.filter(c => c.type === 'word').length > 0 && (
+                <div className="mt-4 pt-4 border-t-2 border-gray-200 px-2">
+                  <h5 className="font-semibold text-gray-700 text-sm mb-3">前輩分享</h5>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+                    {communityContributions
+                      .filter(c => c.type === 'word')
+                      .map((contribution) => (
+                        <div
+                          key={contribution.id}
+                          className="relative border-2 border-green-200 bg-green-50 rounded-lg p-2 sm:p-3 hover:border-green-300 transition-all duration-200 min-h-[80px] sm:min-h-[90px] flex flex-col justify-center"
+                        >
+                          {isOwnContribution(contribution) ? (
+                            <button
+                              onClick={() => handleDelete(contribution.id)}
+                              className="absolute top-1 right-1 text-red-500 hover:text-red-700 text-xs"
+                              title="刪除"
+                            >
+                              刪除
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleReport(contribution.id)}
+                              className="absolute top-1 right-1 text-red-500 hover:text-red-700 text-xs"
+                              title="檢舉"
+                            >
+                              檢舉
+                            </button>
+                          )}
+                          <div className="text-center">
+                            <h4 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-1 leading-tight">
+                              {contribution.content.word}
+                            </h4>
+                            <div className="flex items-center justify-center mb-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  playSound(contribution.content.reading || '');
+                                }}
+                                className="mr-1 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
+                                title="播放讀音"
+                              >
+                                <Image
+                                  src="/icons/volume.svg"
+                                  alt="播放讀音"
+                                  width={12}
+                                  height={12}
+                                />
+                              </button>
+                              <p className="text-blue-600 font-semibold text-sm sm:text-base">
+                                {contribution.content.reading}
+                              </p>
+                            </div>
+                            <p className="text-gray-700 text-xs leading-relaxed px-1">
+                              {contribution.content.meaning}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-gray-700 text-xs leading-relaxed px-1">
-                          {contribution.content.meaning}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 右下角小按鈕 */}
+              <div className="flex justify-end mt-3 px-2">
+                <button
+                  onClick={() => openModal('word')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded shadow-sm transition-colors"
+                >
+                  + 補充單字
+                </button>
               </div>
             </div>
 
             {/* 常用句型 */}
             <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8">
-              <div className="mb-4 sm:mb-6 px-2 flex items-start justify-between">
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">實用句型</h3>
-                  <p className="text-gray-700 text-xs sm:text-sm">
-                    點擊喇叭圖示聽句子發音
-                  </p>
-                </div>
-                <button
-                  onClick={() => openModal('phrase')}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline flex-shrink-0 mt-1"
-                >
-                  + 補充句型
-                </button>
+              <div className="mb-4 sm:mb-6 px-2">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">實用句型</h3>
+                <p className="text-gray-700 text-xs sm:text-sm">
+                  點擊喇叭圖示聽句子發音
+                </p>
               </div>
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-2 mb-4">
                 {essentialWords[selectedCategory as keyof typeof essentialWords].phrases.map((phrase, index) => {
                   // 分離日文和中文部分
                   const parts = phrase.split(' - ');
@@ -691,30 +779,30 @@ export default function EssentialWords() {
                   return (
                     <div
                       key={index}
-                      className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 sm:p-5 rounded-xl border border-blue-100 hover:border-blue-200 transition-all duration-200"
+                      className="bg-gradient-to-r from-blue-50 to-purple-50 p-2 sm:p-3 rounded-lg border border-blue-100 hover:border-blue-200 transition-all duration-200"
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             playSound(japanesePart);
                           }}
-                          className="flex-shrink-0 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100 mt-1"
+                          className="flex-shrink-0 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
                           title="播放句子"
                         >
                           <Image
                             src="/icons/volume.svg"
                             alt="播放句子"
-                            width={16}
-                            height={16}
+                            width={14}
+                            height={14}
                           />
                         </button>
                         <div className="flex-1">
-                          <p className="text-base sm:text-lg text-gray-800 leading-relaxed font-medium mb-1">
+                          <p className="text-sm sm:text-base text-gray-800 leading-snug font-medium mb-0.5">
                             {japanesePart}
                           </p>
                           {chinesePart && (
-                            <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                            <p className="text-xs sm:text-sm text-gray-700 leading-snug">
                               {chinesePart}
                             </p>
                           )}
@@ -723,49 +811,76 @@ export default function EssentialWords() {
                     </div>
                   );
                 })}
-                {/* 社群貢獻的句型 */}
-                {communityContributions
-                  .filter(c => c.type === 'phrase')
-                  .map((contribution) => (
-                    <div
-                      key={contribution.id}
-                      className="bg-gradient-to-r from-green-50 to-green-100 p-4 sm:p-5 rounded-xl border border-green-200 hover:border-green-300 transition-all duration-200"
-                    >
-                      <div className="flex items-start gap-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            playSound(contribution.content.phrase || '');
-                          }}
-                          className="flex-shrink-0 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100 mt-1"
-                          title="播放句子"
+              </div>
+
+              {/* 前輩分享子區塊 */}
+              {communityContributions.filter(c => c.type === 'phrase').length > 0 && (
+                <div className="mt-4 pt-4 border-t-2 border-gray-200 px-2">
+                  <h5 className="font-semibold text-gray-700 text-sm mb-3">前輩分享</h5>
+                  <div className="space-y-2">
+                    {communityContributions
+                      .filter(c => c.type === 'phrase')
+                      .map((contribution) => (
+                        <div
+                          key={contribution.id}
+                          className="bg-gradient-to-r from-green-50 to-green-100 p-2 sm:p-3 rounded-lg border border-green-200 hover:border-green-300 transition-all duration-200"
                         >
-                          <Image
-                            src="/icons/volume.svg"
-                            alt="播放句子"
-                            width={16}
-                            height={16}
-                          />
-                        </button>
-                        <div className="flex-1">
-                          <span className="text-xs text-green-600 block mb-1">前輩分享</span>
-                          <p className="text-base sm:text-lg text-gray-800 leading-relaxed font-medium mb-1">
-                            {contribution.content.phrase}
-                          </p>
-                          <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-                            {contribution.content.translation}
-                          </p>
+                          <div className="flex items-start gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                playSound(contribution.content.phrase || '');
+                              }}
+                              className="flex-shrink-0 hover:scale-110 transition-transform p-1 rounded-full hover:bg-blue-100"
+                              title="播放句子"
+                            >
+                              <Image
+                                src="/icons/volume.svg"
+                                alt="播放句子"
+                                width={14}
+                                height={14}
+                              />
+                            </button>
+                            <div className="flex-1">
+                              <p className="text-sm sm:text-base text-gray-800 leading-snug font-medium mb-0.5">
+                                {contribution.content.phrase}
+                              </p>
+                              <p className="text-xs sm:text-sm text-gray-700 leading-snug">
+                                {contribution.content.translation}
+                              </p>
+                            </div>
+                            {isOwnContribution(contribution) ? (
+                              <button
+                                onClick={() => handleDelete(contribution.id)}
+                                className="text-red-500 hover:text-red-700 text-xs flex-shrink-0"
+                                title="刪除"
+                              >
+                                刪除
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleReport(contribution.id)}
+                                className="text-red-500 hover:text-red-700 text-xs flex-shrink-0"
+                                title="檢舉"
+                              >
+                                檢舉
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <button
-                          onClick={() => handleReport(contribution.id)}
-                          className="text-red-500 hover:text-red-700 text-xs flex-shrink-0"
-                          title="檢舉"
-                        >
-                          檢舉
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 右下角小按鈕 */}
+              <div className="flex justify-end mt-3 px-2">
+                <button
+                  onClick={() => openModal('phrase')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded shadow-sm transition-colors"
+                >
+                  + 補充句型
+                </button>
               </div>
             </div>
 
@@ -800,6 +915,7 @@ export default function EssentialWords() {
         onClose={() => setModalOpen(false)}
         category={selectedCategory || ''}
         type={modalType}
+        onSuccess={loadCommunityContributions}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface UserRegistrationProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface UserRegistrationProps {
 export default function UserRegistration({ isOpen, onComplete }: UserRegistrationProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -53,13 +55,13 @@ export default function UserRegistration({ isOpen, onComplete }: UserRegistratio
         });
       }
 
-      // 儲存到 localStorage
-      localStorage.setItem('userId', userId);
-      localStorage.setItem('userName', user.displayName || user.email.split('@')[0]);
-      localStorage.setItem('userEmail', user.email);
-      if (user.photoURL) {
-        localStorage.setItem('userPhotoURL', user.photoURL);
-      }
+      // 使用 AuthContext 的 login 方法（會自動儲存到 localStorage）
+      login({
+        userId,
+        userName: user.displayName || user.email.split('@')[0],
+        userEmail: user.email,
+        userPhotoURL: user.photoURL || undefined
+      });
 
       onComplete(userId);
     } catch (error: unknown) {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import BackButton from '@/lib/components/BackButton';
 
 interface SurveyResponse {
   id: string;
@@ -333,13 +334,9 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">數據管理中心</h1>
-            <button
-              onClick={() => router.push('/')}
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-            >
-              返回首頁
-            </button>
+            <BackButton />
+            <h1 className="text-3xl font-bold text-gray-800 flex-1 text-center">數據管理中心</h1>
+            <div className="w-20"></div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

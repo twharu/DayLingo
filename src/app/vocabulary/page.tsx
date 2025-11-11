@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
+import BackButton from '@/lib/components/BackButton';
 
 interface SavedWord {
   id: string;
@@ -33,6 +34,12 @@ interface GroupedWords {
   };
 }
 
+interface GroupedByCategory {
+  [category: string]: SavedWord[];
+}
+
+type ViewMode = 'byDate' | 'byCategory';
+
 function VocabularyContent() {
   const searchParams = useSearchParams();
   const [savedWords, setSavedWords] = useState<SavedWord[]>([]);
@@ -40,6 +47,7 @@ function VocabularyContent() {
   const [selectedWord, setSelectedWord] = useState<SavedWord | null>(null);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('byDate');
 
   useEffect(() => {
     loadSavedWords();
@@ -129,6 +137,23 @@ function VocabularyContent() {
       }
 
       grouped[date][taskName].push(word);
+    });
+
+    return grouped;
+  };
+
+  // 將單字按分類分組（直接顯示單字，不再有第二層）
+  const groupWordsByCategory = (): GroupedByCategory => {
+    const grouped: GroupedByCategory = {};
+
+    savedWords.forEach(word => {
+      const category = word.category || '未分類';
+
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+
+      grouped[category].push(word);
     });
 
     return grouped;
@@ -297,19 +322,47 @@ function VocabularyContent() {
       <div className="max-w-4xl mx-auto">
         <header className="py-6">
           <div className="flex items-center justify-between">
+            <div className="flex-shrink-0">
+              <BackButton />
+            </div>
             <div className="flex-1">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">
                 單字庫
               </h1>
-              <p className="text-gray-700">
-                已收藏 {savedWords.length} 個單字
-              </p>
             </div>
             <div className="flex items-center gap-3">
               <HamburgerMenu />
             </div>
           </div>
         </header>
+
+        {/* 檢視模式切換 */}
+        {savedWords.length > 0 && (
+          <div className="mb-6 flex justify-center">
+            <div className="inline-flex bg-white rounded-lg shadow-md p-1">
+              <button
+                onClick={() => setViewMode('byDate')}
+                className={`px-6 py-2 rounded-md transition-all duration-200 font-medium ${
+                  viewMode === 'byDate'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                依日期瀏覽
+              </button>
+              <button
+                onClick={() => setViewMode('byCategory')}
+                className={`px-6 py-2 rounded-md transition-all duration-200 font-medium ${
+                  viewMode === 'byCategory'
+                    ? 'bg-purple-500 text-white shadow-md'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                依分類瀏覽
+              </button>
+            </div>
+          </div>
+        )}
 
 
         {savedWords.length === 0 ? (
@@ -322,140 +375,249 @@ function VocabularyContent() {
           </div>
         ) : (
           <>
-            {/* 按日期和待辦事項分組顯示 */}
+            {/* 分組顯示 */}
             <div className="space-y-4">
-              {(() => {
-                const grouped = groupWordsByDateAndTask();
-                const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+              {viewMode === 'byDate' ? (
+                // 日期模式：三層結構（日期 → 任務 → 單字）
+                (() => {
+                  const grouped = groupWordsByDateAndTask();
+                  const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
-                return dates.map(date => {
-                  const isDateExpanded = expandedDates.has(date);
-                  const tasks = grouped[date];
-                  const taskNames = Object.keys(tasks);
-                  const wordCount = taskNames.reduce((sum, taskName) => sum + tasks[taskName].length, 0);
+                  return dates.map(date => {
+                    const isDateExpanded = expandedDates.has(date);
+                    const tasks = grouped[date];
+                    const taskNames = Object.keys(tasks).sort((a, b) => {
+                      if (a === '未分類') return 1;
+                      if (b === '未分類') return -1;
+                      return a.localeCompare(b);
+                    });
+                    const wordCount = taskNames.reduce((sum, taskName) => sum + tasks[taskName].length, 0);
 
-                  return (
-                    <div key={date} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                      {/* 日期標題 */}
-                      <button
-                        onClick={() => toggleDate(date)}
-                        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <svg
-                            className={`w-5 h-5 text-gray-600 transition-transform ${isDateExpanded ? 'rotate-90' : ''}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                          <h3 className="text-lg font-semibold text-gray-800">{date}</h3>
-                        </div>
-                        <span className="text-sm text-gray-600">{wordCount} 個單字</span>
-                      </button>
+                    return (
+                      <div key={date} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                        {/* 日期標題 */}
+                        <button
+                          onClick={() => toggleDate(date)}
+                          className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <svg
+                              className={`w-5 h-5 text-gray-600 transition-transform ${isDateExpanded ? 'rotate-90' : ''}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                            <h3 className="text-lg font-semibold text-gray-800">{date}</h3>
+                          </div>
+                          <span className="text-sm text-gray-600">{wordCount} 個單字</span>
+                        </button>
 
-                      {/* 待辦事項列表 */}
-                      {isDateExpanded && (
-                        <div className="border-t border-gray-200">
-                          {taskNames.map(taskName => {
-                            const taskKey = `${date}-${taskName}`;
-                            const isTaskExpanded = expandedTasks.has(taskKey);
-                            const words = tasks[taskName];
+                        {/* 任務列表 */}
+                        {isDateExpanded && (
+                          <div className="border-t border-gray-200">
+                            {taskNames.map(taskName => {
+                              const taskKey = `${date}-${taskName}`;
+                              const isTaskExpanded = expandedTasks.has(taskKey);
+                              const words = tasks[taskName];
 
-                            return (
-                              <div key={taskKey} data-task-key={taskKey} className="border-b border-gray-100 last:border-b-0">
-                                {/* 待辦事項標題 */}
-                                <button
-                                  onClick={() => toggleTask(taskKey)}
-                                  className="w-full p-4 pl-12 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <svg
-                                      className={`w-4 h-4 text-gray-600 transition-transform ${isTaskExpanded ? 'rotate-90' : ''}`}
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                    <h4 className="font-medium text-gray-800">{taskName}</h4>
-                                  </div>
-                                  <span className="text-sm text-gray-600">{words.length} 個單字</span>
-                                </button>
-
-                                {/* 單字卡片 */}
-                                {isTaskExpanded && (
-                                  <div className="p-4 pl-16 bg-gray-50">
-                                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                      {words.map((word) => (
-                                        <div
-                                          key={word.id}
-                                          className="relative border border-gray-200 bg-white rounded-lg p-3 hover:border-blue-300 transition-colors cursor-pointer min-h-[120px] flex items-center justify-center"
-                                          onClick={() => setSelectedWord(word)}
-                                        >
-                                          {/* 刪除按鈕 */}
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              deleteWord(word.id);
-                                            }}
-                                            className="absolute top-1 right-1 text-red-500 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-red-50"
-                                            title="刪除單字"
-                                          >
-                                            <Image
-                                              src="/icons/delete.svg"
-                                              alt="刪除"
-                                              width={14}
-                                              height={14}
-                                            />
-                                          </button>
-
-                                          {/* 分類標籤 */}
-                                          {word.category && (
-                                            <span className="absolute top-1 left-1 bg-green-100 text-green-800 text-xs font-medium px-1.5 py-0.5 rounded">
-                                              {word.category}
-                                            </span>
-                                          )}
-
-                                          <div className="text-center w-full mt-6">
-                                            <p className="text-blue-600 font-medium mb-1 flex items-center justify-center">
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  playSound(word.reading);
-                                                }}
-                                                className="mr-1 hover:scale-110 transition-transform p-0.5 rounded-full hover:bg-blue-100"
-                                                title="播放讀音"
-                                              >
-                                                <Image
-                                                  src="/icons/volume.svg"
-                                                  alt="播放讀音"
-                                                  width={12}
-                                                  height={12}
-                                                />
-                                              </button>
-                                              <span className="text-xs">{word.reading}</span>
-                                            </p>
-                                            <h3 className="text-lg font-bold text-gray-800 mb-2">
-                                              {word.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
-                                            </h3>
-                                            <p className="text-xs text-gray-700 line-clamp-2">{word.meaning}</p>
-                                          </div>
-                                        </div>
-                                      ))}
+                              return (
+                                <div key={taskKey} data-task-key={taskKey} className="border-b border-gray-100 last:border-b-0">
+                                  {/* 任務標題 */}
+                                  <button
+                                    onClick={() => toggleTask(taskKey)}
+                                    className="w-full p-4 pl-12 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                                  >
+                                    <div className="flex items-center space-x-3">
+                                      <svg
+                                        className={`w-4 h-4 text-gray-600 transition-transform ${isTaskExpanded ? 'rotate-90' : ''}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                      </svg>
+                                      <h4 className="font-medium text-gray-800">{taskName}</h4>
                                     </div>
+                                    <span className="text-sm text-gray-600">{words.length} 個單字</span>
+                                  </button>
+
+                                  {/* 單字卡片 */}
+                                  {isTaskExpanded && (
+                                    <div className="p-4 pl-16 bg-gray-50">
+                                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                        {words.map((word) => (
+                                          <div
+                                            key={word.id}
+                                            className="relative border border-gray-200 bg-white rounded-lg p-3 hover:border-blue-300 transition-colors cursor-pointer min-h-[120px] flex items-center justify-center"
+                                            onClick={() => setSelectedWord(word)}
+                                          >
+                                            {/* 刪除按鈕 */}
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteWord(word.id);
+                                              }}
+                                              className="absolute top-1 right-1 text-red-500 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-red-50"
+                                              title="刪除單字"
+                                            >
+                                              <Image
+                                                src="/icons/delete.svg"
+                                                alt="刪除"
+                                                width={14}
+                                                height={14}
+                                              />
+                                            </button>
+
+                                            {/* 分類標籤 */}
+                                            {word.category && (
+                                              <span className="absolute top-1 left-1 bg-green-100 text-green-800 text-xs font-medium px-1.5 py-0.5 rounded">
+                                                {word.category}
+                                              </span>
+                                            )}
+
+                                            <div className="text-center w-full mt-6">
+                                              <p className="text-blue-600 font-medium mb-1 flex items-center justify-center">
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    playSound(word.reading);
+                                                  }}
+                                                  className="mr-1 hover:scale-110 transition-transform p-0.5 rounded-full hover:bg-blue-100"
+                                                  title="播放讀音"
+                                                >
+                                                  <Image
+                                                    src="/icons/volume.svg"
+                                                    alt="播放讀音"
+                                                    width={12}
+                                                    height={12}
+                                                  />
+                                                </button>
+                                                <span className="text-xs">{word.reading}</span>
+                                              </p>
+                                              <h3 className="text-lg font-bold text-gray-800 mb-2">
+                                                {word.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
+                                              </h3>
+                                              <p className="text-xs text-gray-700 line-clamp-2">{word.meaning}</p>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()
+              ) : (
+                // 分類模式：二層結構（分類 → 單字）
+                (() => {
+                  const grouped = groupWordsByCategory();
+                  const categories = Object.keys(grouped).sort((a, b) => {
+                    if (a === '未分類') return 1;
+                    if (b === '未分類') return -1;
+                    return a.localeCompare(b);
+                  });
+
+                  return categories.map(category => {
+                    const isCategoryExpanded = expandedDates.has(category);
+                    const words = grouped[category];
+
+                    return (
+                      <div key={category} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                        {/* 分類標題 */}
+                        <button
+                          onClick={() => toggleDate(category)}
+                          className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <svg
+                              className={`w-5 h-5 text-gray-600 transition-transform ${isCategoryExpanded ? 'rotate-90' : ''}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                            <h3 className="text-lg font-semibold text-gray-800">{category}</h3>
+                          </div>
+                          <span className="text-sm text-gray-600">{words.length} 個單字</span>
+                        </button>
+
+                        {/* 單字卡片（直接顯示，沒有第三層） */}
+                        {isCategoryExpanded && (
+                          <div className="p-4 bg-gray-50 border-t border-gray-200">
+                            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                              {words.map((word) => (
+                                <div
+                                  key={word.id}
+                                  className="relative border border-gray-200 bg-white rounded-lg p-3 hover:border-blue-300 transition-colors cursor-pointer min-h-[120px] flex items-center justify-center"
+                                  onClick={() => setSelectedWord(word)}
+                                >
+                                  {/* 刪除按鈕 */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteWord(word.id);
+                                    }}
+                                    className="absolute top-1 right-1 text-red-500 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-red-50"
+                                    title="刪除單字"
+                                  >
+                                    <Image
+                                      src="/icons/delete.svg"
+                                      alt="刪除"
+                                      width={14}
+                                      height={14}
+                                    />
+                                  </button>
+
+                                  {/* 分類標籤 */}
+                                  {word.category && (
+                                    <span className="absolute top-1 left-1 bg-green-100 text-green-800 text-xs font-medium px-1.5 py-0.5 rounded">
+                                      {word.category}
+                                    </span>
+                                  )}
+
+                                  <div className="text-center w-full mt-6">
+                                    <p className="text-blue-600 font-medium mb-1 flex items-center justify-center">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          playSound(word.reading);
+                                        }}
+                                        className="mr-1 hover:scale-110 transition-transform p-0.5 rounded-full hover:bg-blue-100"
+                                        title="播放讀音"
+                                      >
+                                        <Image
+                                          src="/icons/volume.svg"
+                                          alt="播放讀音"
+                                          width={12}
+                                          height={12}
+                                        />
+                                      </button>
+                                      <span className="text-xs">{word.reading}</span>
+                                    </p>
+                                    <h3 className="text-lg font-bold text-gray-800 mb-2">
+                                      {word.word.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1').replace(/<[^>]*>/g, '')}
+                                    </h3>
+                                    <p className="text-xs text-gray-700 line-clamp-2">{word.meaning}</p>
                                   </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                });
-              })()}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()
+              )}
             </div>
 
             {/* 單字詳細彈窗 */}
@@ -645,7 +807,7 @@ function VocabularyContent() {
                         }}
                         className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                       >
-                        刪除這個單字
+                        刪除
                       </button>
                       <button
                         onClick={() => setSelectedWord(null)}
