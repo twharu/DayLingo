@@ -357,7 +357,7 @@ function VocabularyContent() {
                 onClick={() => setViewMode('byCategory')}
                 className={`px-6 py-2 rounded-md transition-all duration-200 font-medium ${
                   viewMode === 'byCategory'
-                    ? 'bg-purple-500 text-white shadow-md'
+                    ? 'bg-blue-600 text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
