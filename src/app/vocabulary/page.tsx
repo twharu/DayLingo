@@ -325,10 +325,13 @@ function VocabularyContent() {
             <div className="flex-shrink-0">
               <BackButton />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 text-center">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">
                 單字庫
               </h1>
+              <p className="text-gray-700">
+                已收藏 {savedWords.length} 個單字
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <HamburgerMenu />
