@@ -130,33 +130,23 @@ export default function Home() {
     try {
       // 先檢查 localStorage 緩存
       const cachedStatus = localStorage.getItem('surveyCompleted');
-      console.log('[Survey Check] userId:', userId);
-      console.log('[Survey Check] localStorage surveyCompleted:', cachedStatus);
 
       if (cachedStatus === 'true') {
-        console.log('[Survey Check] Using cached status - survey already completed');
         return;
       }
 
       // 查詢 Firebase 是否有該用戶的問卷記錄
-      console.log('[Survey Check] Querying Firebase for userId:', userId);
       const q = query(
         collection(db, 'surveyResponses'),
         where('userId', '==', userId)
       );
       const querySnapshot = await getDocs(q);
-      console.log('[Survey Check] Firebase query result - empty?', querySnapshot.empty, 'size:', querySnapshot.size);
 
       if (!querySnapshot.empty) {
         // 用戶已填寫過問卷，更新緩存並直接啟動導覽
-        console.log('[Survey Check] Found survey response in Firebase, updating cache');
-        querySnapshot.forEach(doc => {
-          console.log('[Survey Check] Survey document:', doc.id, doc.data());
-        });
         localStorage.setItem('surveyCompleted', 'true');
       } else {
         // 用戶未填寫問卷，顯示問卷彈窗
-        console.log('[Survey Check] No survey found - showing survey modal');
         setTimeout(() => {
           setShowSurvey(true);
         }, 1000);
@@ -166,7 +156,6 @@ export default function Home() {
       // 發生錯誤時，檢查 localStorage
       const cachedStatus = localStorage.getItem('surveyCompleted');
       if (cachedStatus !== 'true') {
-        console.log('[Survey Check] Error occurred and no cache - showing survey');
         setTimeout(() => {
           setShowSurvey(true);
         }, 1000);
@@ -182,15 +171,8 @@ export default function Home() {
     const lines = content.split('\n');
     let currentSection = '';
 
-    console.log('🔍 開始解析，總共', lines.length, '行');
-    console.log('📄 前10行內容:', lines.slice(0, 10));
-
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-
-      if (i < 15) {
-        console.log(`第 ${i} 行: "${line}"`);
-      }
 
       // 檢查區塊標題（更靈活的匹配規則）
       if (line.includes('關聯單字') ||
@@ -200,34 +182,22 @@ export default function Home() {
           (line.startsWith('##') && (line.includes('單字') || line.includes('詞彙'))) ||
           (line.startsWith('###') && (line.includes('單字') || line.includes('詞彙')))) {
         currentSection = 'words';
-        console.log('✅ 找到單字區塊:', line);
         continue;
       }
-
-      // 移除日常對話區塊檢查，因為已經不生成了
-      // if (line.includes('## 日常對話') || line.includes('### 日常對話')) {
-      //   currentSection = '';
-      //   console.log('✅ 找到日常對話區塊，停止解析單字');
-      //   continue;
-      // }
 
       // 解析單字（支持 "1." 或 "### 1." 格式）
       // 如果遇到 1. 格式，自動進入 words section
       if (line.match(/^(###\s*)?1\./)) {
         currentSection = 'words';
-        console.log('✅ 自動檢測到單字區塊開始');
       }
 
       if (currentSection === 'words' && line.match(/^(###\s*)?\d+\./)) {
         // 移除數字編號和可能的 ### 前綴
         const cleanLine = line.replace(/^###\s*\d+\.\s*/, '').replace(/^\d+\.\s*/, '');
-        console.log('🔍 處理單字行:', cleanLine);
         const wordMatch = cleanLine.match(/^(.+?)\s*-\s*(.+)$/);
 
         if (wordMatch) {
           const [, wordWithRuby, meaning] = wordMatch;
-          console.log('  - 原始單字:', wordWithRuby);
-          console.log('  - 意思:', meaning);
 
           // 提取 ruby 標記中的單字和讀音
           // 讀音：將所有 <ruby>漢字<rt>讀音</rt></ruby> 組合起來
@@ -261,9 +231,6 @@ export default function Home() {
 
           const word = wordParts.join('').trim();
           const reading = readingParts.join('').trim();
-
-          console.log('  - 解析後單字:', word);
-          console.log('  - 解析後讀音:', reading);
 
           // 找例句
           let example = '';
@@ -336,17 +303,11 @@ export default function Home() {
 
           if (word && reading && meaning) {
             words.push(item);
-            console.log(`📌 解析到第 ${words.length} 個單字:`, word, reading, meaning);
-            console.log(`   - 對話A: ${dialogueA ? '✅' : '❌'}`);
-            console.log(`   - 對話B: ${dialogueB ? '✅' : '❌'}`);
-          } else {
-            console.log('⚠️ 單字解析失敗，缺少必要欄位:', { word, reading, meaning });
           }
         }
       }
     }
 
-    console.log('✅ 解析完成，總共解析到', words.length, '個單字');
     setParsedWords(words);
   };
 
@@ -480,8 +441,6 @@ export default function Home() {
           usageCount: newUsageCount,
           lastUsed: new Date().toISOString()
         });
-
-        console.log(`參與者 ${userId} 使用次數更新為: ${newUsageCount}`);
       }
     } catch (error) {
       console.error('更新參與者使用次數失敗:', error);
@@ -494,14 +453,12 @@ export default function Home() {
 
     // 防止重複記錄 - 使用 ref 檢查
     if (sessionRecorded.current) {
-      console.log('會話已記錄過，跳過重複記錄');
       return;
     }
 
     // 雙重檢查 - localStorage 防護
     const sessionKey = `session_${sessionStartTime.getTime()}_${userId}`;
     if (localStorage.getItem(sessionKey)) {
-      console.log('會話已在 localStorage 中記錄過，跳過重複記錄');
       sessionRecorded.current = true;
       return;
     }
@@ -520,8 +477,6 @@ export default function Home() {
       // 標記這個會話已記錄
       localStorage.setItem(sessionKey, 'true');
       sessionRecorded.current = true;
-
-      console.log('學習會話已記錄:', sessionData);
     } catch (error) {
       console.error('記錄學習會話失敗:', error);
     }
@@ -534,7 +489,6 @@ export default function Home() {
 
       // 預處理日語文字
       const processedText = preprocessJapaneseText(text);
-      console.log('原文:', text, '處理後:', processedText);
 
       const utterance = new SpeechSynthesisUtterance(processedText);
       utterance.lang = 'ja-JP'; // 設定為日語
@@ -565,7 +519,6 @@ export default function Home() {
 
       if (femaleVoice) {
         utterance.voice = femaleVoice;
-        console.log('使用語音:', femaleVoice.name, femaleVoice.lang);
       }
 
       window.speechSynthesis.speak(utterance);
@@ -655,7 +608,6 @@ export default function Home() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📝 收到的完整內容:', data.content);
         setContent(data);
         parseWords(data.content);
 
@@ -907,24 +859,6 @@ export default function Home() {
                       onClick={() => setSelectedWordIndex(index)}
                     >
                       <div className="text-center w-full">
-                        <p className="text-blue-600 font-medium mb-1 flex items-center justify-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              playSound(word.reading);
-                            }}
-                            className="mr-1 hover:scale-110 transition-transform p-0.5 rounded-full hover:bg-blue-100"
-                            title="播放讀音"
-                          >
-                            <Image
-                              src="/icons/volume.svg"
-                              alt="播放讀音"
-                              width={12}
-                              height={12}
-                            />
-                          </button>
-                          <span className="text-xs">{word.reading}</span>
-                        </p>
                         <h3 className="text-base md:text-lg font-bold text-gray-800 mb-1 md:mb-2">
                           {word.word}
                         </h3>
@@ -1072,7 +1006,6 @@ export default function Home() {
                             cleanExample = cleanExample.replace(/<ruby>([^<]+)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
                             // 移除其他 HTML 標籤
                             cleanExample = cleanExample.replace(/<[^>]*>/g, '');
-                            console.log('播放例句:', cleanExample);
                             playSound(cleanExample);
                           }}
                           className="flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm"

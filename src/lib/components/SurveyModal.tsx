@@ -142,6 +142,12 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
     }
   };
 
+  // const handleClose = () => {
+  //   if (onClose) {
+  //     onClose();
+  //   }
+  //   // 關閉問卷時不跳轉，留在當前頁面
+  // };
 
   const steps = [
     {

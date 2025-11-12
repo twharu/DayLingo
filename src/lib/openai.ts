@@ -1,11 +1,22 @@
 import OpenAI from 'openai';
 
-const openai = process.env.NEXT_PUBLIC_TEST_MODE === 'true' 
-  ? null 
+const openai = process.env.NEXT_PUBLIC_TEST_MODE === 'true'
+  ? null
   : new OpenAI({
       apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
     });
 
+// 分類上下文映射
+// function getCategoryContext(category: string) {
+//   const contexts: { [key: string]: string } = {
+//     '日常': '日常生活情境，例如與家人朋友的日常對話',
+//     '購物': '購物情境，例如與店員的對話',
+//     '學校': '學校情境，例如與同學老師的對話',
+//     '文件申辦': '銀行郵局情境，例如辦理各種手續的對話',
+//     '工作': '工作情境，例如與同事的職場對話',
+//   };
+//   return contexts[category] || '一般生活情境的對話';
+// }
 
 export async function generateJapaneseContent(taskData: string) {
   // 測試模式返回假資料
@@ -47,7 +58,7 @@ export async function generateJapaneseContent(taskData: string) {
       messages: [
         {
           role: "system",
-          content: "你是住在日本20年的資深日語專家，幫助剛到日本台灣留學生學習真正地道的日語。請生成符合日本人實際使用習慣的詞彙和表達方式。\n\n**重要限制：**\n- 絕對不要生成 JLPT N5-N4 的基礎詞彙（如：日本語、学校、行く、今日、勉強、食べる等初級教科書會教的詞）\n- 只生成 JLPT N2-N1 程度且「在日本生活中實際會用到」的詞彙\n- 不需要過度專業的術語，重點是「生活實用」\n\n所有日文都要使用 <ruby>漢字<rt>ひらがな</rt></ruby> 格式標記讀音。"
+          content: "你是住在日本20年的資深日語專家，幫助剛到日本台灣留學生學習真正地道的日語。請生成符合日本人實際使用習慣的詞彙和表達方式。\n\n**重要限制：**\n- 絕對不要生成 JLPT N5-N4 的基礎詞彙（如：日本語、学校、行く、今日、勉強、食べる等初級教科書會教的詞）\n- 只生成 JLPT N2-N1 程度且「在日本生活中實際會用到」的詞彙\n\n所有日文都要使用 <ruby>漢字<rt>ひらがな</rt></ruby> 格式標記讀音。"
         },
         {
           role: "user",
@@ -70,15 +81,14 @@ export async function generateJapaneseContent(taskData: string) {
 
 **✅ 應該生成的詞彙：**
 - 這個待辦事項會直接接觸到的**具體物品名稱**（N2-N1程度）
-- 執行這個待辦事項時會說出的**生活實用詞彙**（不要太專業）
+- 執行這個待辦事項時會說出的**生活實用詞彙**
 - 只有這個情境才會看到/聽到的**特定表達方式**
 - 必須是完整的日文詞彙（漢字+平假名、片假名組合）
 - **絕對不能是初級教科書會教的基礎詞**
 
 **❌ 絕對不要生成的詞彙：**
-- 購物通用詞：店員、レジ、会計、値段、在庫、領収書、袋、現金、カード、割引、ポイント
-- 餐廳通用詞：注文、メニュー、予約、席、お冷
-- 交通通用詞：切符、料金、時刻表、乗車、改札
+- 購物通用詞：店員、レジ、会計、値段、在庫、領収書、袋、現金、カード、試用品
+- 餐廳通用詞：注文、予約、席、お冷
 - 基礎詞彙：これ、あれ、いくら、ください、ありがとう
 - 英文縮寫或代號：SPF、UV、PA、N95 等（雖然會看到但不是日文詞彙）
 
@@ -118,10 +128,8 @@ export async function generateJapaneseContent(taskData: string) {
 **自我檢查機制：**
 生成完畢後，請自問：
 1. 如果換成類似的待辦事項（例如去便利店買飲料），這些詞還會用到嗎？
-2. 如果答案是「會」→ 代表這是通用詞，請刪除
-3. 如果答案是「不會」→ 代表這是專有詞，保留
 
-3. **格式要求**：
+2. **格式要求**：
 每個單字必須包含：
 - 單字本身（純名詞，不含助詞）
 - 例句（15-20字的自然句子，展示實際用法）
