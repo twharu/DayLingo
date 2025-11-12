@@ -259,8 +259,8 @@ export default function Home() {
             readingParts.push(plainText);
           }
 
-          let word = wordParts.join('').trim();
-          let reading = readingParts.join('').trim();
+          const word = wordParts.join('').trim();
+          const reading = readingParts.join('').trim();
 
           console.log('  - 解析後單字:', word);
           console.log('  - 解析後讀音:', reading);
