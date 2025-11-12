@@ -531,10 +531,10 @@ export default function EssentialWords() {
           <div className="flex items-start justify-between">
             <div className="text-center flex-1 pr-4">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 sm:mb-3 leading-tight">
-                新手必備單字
+                新手必備
               </h1>
               <p className="text-gray-700 text-sm sm:text-base lg:text-lg leading-relaxed">
-                剛到日本可能遇到的生活情境單字
+                剛到日本可能遇到的生活情境
               </p>
             </div>
             <div className="flex-shrink-0 flex items-center gap-2 sm:gap-3">

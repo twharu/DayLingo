@@ -205,7 +205,7 @@ export default function Home() {
           const wordParts: string[] = [];
 
           // 使用正則表達式匹配所有部分（包含 ruby 標籤和普通文字）
-          const rubyRegex = /<ruby>([^<]+)<rt>([^<]+)<\/rt><\/ruby>/g;
+          const rubyRegex = /<ruby>([^<]+)<rt>([^<]*)<\/rt><\/ruby>/g;
           let lastIndex = 0;
           let match;
 
@@ -217,8 +217,9 @@ export default function Home() {
               readingParts.push(plainText);
             }
             // 添加 ruby 標籤中的內容
-            wordParts.push(match[1]); // 漢字
-            readingParts.push(match[2]); // 讀音
+            wordParts.push(match[1]); // 漢字或片假名
+            // 如果 <rt> 是空的，表示是純片假名，讀音就是本身
+            readingParts.push(match[2] || match[1]); // 讀音（如果空的話用原文）
             lastIndex = match.index + match[0].length;
           }
 
@@ -859,9 +860,10 @@ export default function Home() {
                       onClick={() => setSelectedWordIndex(index)}
                     >
                       <div className="text-center w-full">
-                        <h3 className="text-base md:text-lg font-bold text-gray-800 mb-1 md:mb-2">
-                          {word.word}
-                        </h3>
+                        <h3
+                          className="text-base md:text-lg font-bold text-gray-800 mb-1 md:mb-2"
+                          dangerouslySetInnerHTML={{ __html: word.word }}
+                        />
                         <p className="text-xs text-gray-700 mb-1 md:mb-2 line-clamp-2">{word.meaning}</p>
                         <button
                           onClick={(e) => {
@@ -894,11 +896,16 @@ export default function Home() {
                         return;
                       }
 
+                      // 收集目前已有的單字（用於告訴 AI 避免重複）
+                      const existingWords = parsedWords.map(w => w.word.replace(/<[^>]*>/g, '')).join('、');
+
                       const fullTask = `
 日期: ${selectedDate}
 分類: ${selectedCategory}
 待辦事項名稱: ${currentTaskName}
 詳細描述: ${currentTaskName}
+
+⚠️ 請避免生成以下已存在的單字：${existingWords}
                       `.trim();
 
                       setRegenerating(true);
@@ -915,6 +922,86 @@ export default function Home() {
                         if (response.ok) {
                           const data = await response.json();
                           setContent(data);
+
+                          // 解析新單字
+                          const tempWords: typeof parsedWords = [];
+                          const content = data.content;
+                          const lines = content.split('\n');
+                          let currentSection = '';
+
+                          for (let i = 0; i < lines.length; i++) {
+                            const line = lines[i].trim();
+
+                            if (line.includes('關聯單字') || line.includes('單字列表') ||
+                                line.includes('專有詞彙') || line.includes('符合待辦事項') ||
+                                (line.startsWith('##') && (line.includes('單字') || line.includes('詞彙'))) ||
+                                (line.startsWith('###') && (line.includes('單字') || line.includes('詞彙')))) {
+                              currentSection = 'words';
+                              continue;
+                            }
+
+                            if (line.match(/^(###\s*)?1\./)) {
+                              currentSection = 'words';
+                            }
+
+                            if (currentSection === 'words' && line.match(/^(###\s*)?\d+\./)) {
+                              const cleanLine = line.replace(/^###\s*\d+\.\s*/, '').replace(/^\d+\.\s*/, '');
+                              const wordMatch = cleanLine.match(/^(.+?)\s*-\s*(.+)$/);
+
+                              if (wordMatch) {
+                                const [, wordWithRuby, meaning] = wordMatch;
+                                const readingParts: string[] = [];
+                                const wordParts: string[] = [];
+                                const rubyRegex = /<ruby>([^<]+)<rt>([^<]*)<\/rt><\/ruby>/g;
+                                let lastIndex = 0;
+                                let match;
+
+                                while ((match = rubyRegex.exec(wordWithRuby)) !== null) {
+                                  if (match.index > lastIndex) {
+                                    const plainText = wordWithRuby.substring(lastIndex, match.index);
+                                    wordParts.push(plainText);
+                                    readingParts.push(plainText);
+                                  }
+                                  wordParts.push(match[1]);
+                                  readingParts.push(match[2] || match[1]);
+                                  lastIndex = match.index + match[0].length;
+                                }
+
+                                if (lastIndex < wordWithRuby.length) {
+                                  const plainText = wordWithRuby.substring(lastIndex);
+                                  wordParts.push(plainText);
+                                  readingParts.push(plainText);
+                                }
+
+                                const word = wordParts.join('').trim();
+                                const reading = readingParts.join('').trim();
+
+                                // 檢查是否與現有單字重複
+                                const wordText = word.replace(/<[^>]*>/g, '');
+                                const isDuplicate = parsedWords.some(w =>
+                                  w.word.replace(/<[^>]*>/g, '') === wordText
+                                );
+
+                                if (!isDuplicate && word && reading && meaning) {
+                                  // 簡化版本：只儲存基本資訊
+                                  tempWords.push({
+                                    word: wordWithRuby,
+                                    reading,
+                                    meaning,
+                                    example: '',
+                                    exampleTranslation: ''
+                                  });
+                                }
+                              }
+                            }
+                          }
+
+                          // 如果新單字數量太少（少於3個），提示使用者
+                          if (tempWords.length < 3) {
+                            alert(`只生成了 ${tempWords.length} 個新單字，可能是因為避免重複。建議新增其他待辦事項來學習更多單字。`);
+                          }
+
+                          // 用新單字覆蓋舊的（但保持去重）
                           parseWords(data.content);
                           setSavedWords(new Set());
                         } else {
@@ -966,9 +1053,10 @@ export default function Home() {
                 <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-start justify-between mb-6">
                     <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                        {parsedWords[selectedWordIndex].word}
-                      </h3>
+                      <h3
+                        className="text-2xl font-bold text-gray-800 mb-2"
+                        dangerouslySetInnerHTML={{ __html: parsedWords[selectedWordIndex].word }}
+                      />
                       <p className="text-lg text-gray-700 mb-3">{parsedWords[selectedWordIndex].meaning}</p>
                       <p className="text-blue-600 font-medium flex items-center">
                         <button

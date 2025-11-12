@@ -6,17 +6,7 @@ const openai = process.env.NEXT_PUBLIC_TEST_MODE === 'true'
       apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
     });
 
-// 分類上下文映射
-// function getCategoryContext(category: string) {
-//   const contexts: { [key: string]: string } = {
-//     '日常': '日常生活情境，例如與家人朋友的日常對話',
-//     '購物': '購物情境，例如與店員的對話',
-//     '學校': '學校情境，例如與同學老師的對話',
-//     '文件申辦': '銀行郵局情境，例如辦理各種手續的對話',
-//     '工作': '工作情境，例如與同事的職場對話',
-//   };
-//   return contexts[category] || '一般生活情境的對話';
-// }
+
 
 export async function generateJapaneseContent(taskData: string) {
   // 測試模式返回假資料
@@ -122,6 +112,11 @@ export async function generateJapaneseContent(taskData: string) {
 **📊 生成數量：固定 9 個**
 - 必須生成恰好 9 個單字，不多不少
 - 每個單字都必須是高品質、高關聯度的 N2-N1 詞彙
+
+**🔄 避免重複（重要）：**
+- 如果使用者提供了「請避免生成以下已存在的單字」清單，絕對不要生成清單中的任何單字
+- 如果無法找到足夠的新單字，請生成相關但不同的詞彙
+- 即使只能生成較少的單字，也絕對不要重複已存在的單字
 
 **🚨 質量優先：寧可刪除低關聯度的詞，也不要加入通用詞或基礎詞**
 
