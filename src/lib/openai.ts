@@ -6,17 +6,6 @@ const openai = process.env.NEXT_PUBLIC_TEST_MODE === 'true'
       apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
     });
 
-// 分類上下文映射
-function getCategoryContext(category: string) {
-  const contexts: { [key: string]: string } = {
-    '日常': '日常生活情境，例如與家人朋友的日常對話',
-    '購物': '購物情境，例如與店員的對話', 
-    '學校': '學校情境，例如與同學老師的對話',
-    '文件申辦': '銀行郵局情境，例如辦理各種手續的對話',
-    '工作': '工作情境，例如與同事的職場對話',
-  };
-  return contexts[category] || '一般生活情境的對話';
-}
 
 export async function generateJapaneseContent(taskData: string) {
   // 測試模式返回假資料
