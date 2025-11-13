@@ -73,7 +73,7 @@ export default function ContributionModal({ isOpen, onClose, category, type, onS
         createdAt: serverTimestamp()
       });
 
-      alert('感謝分享！內容已送出，等待其他使用者確認。');
+      alert('感謝分享！內容已送出。');
 
       // 清空表單
       setFormData({
