@@ -194,8 +194,9 @@ export default function SurveyModal({ isOpen, onComplete, onClose, isManualTrigg
                     '專門學校學生', 
                     '大學生（學部）',
                     '大學院生（修士/博士）',
-                    '研究生',
                     '交換學生',
+                    '打工度假',
+                    '社會人士',
                     '其他'
                   ].map(identity => (
                     <button

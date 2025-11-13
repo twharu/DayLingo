@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
 import ContributionModal from '@/lib/components/ContributionModal';
 import UserRegistration from '@/lib/components/UserRegistration';
+import SurveyModal from '@/lib/components/SurveyModal';
 import { collection, getDocs, addDoc, serverTimestamp, query, where, increment, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -283,16 +284,68 @@ export default function EssentialWords() {
   const [modalType, setModalType] = useState<'tip' | 'word' | 'phrase'>('tip');
   const [communityContributions, setCommunityContributions] = useState<CommunityContribution[]>([]);
   const [showUserRegistration, setShowUserRegistration] = useState(false);
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // 檢查用戶登入狀態
+  // 檢查用戶是否已填寫事前問卷
+  const checkSurveyStatus = useCallback(async (userId: string) => {
+    try {
+      // 先檢查 localStorage 緩存
+      const cachedStatus = localStorage.getItem('surveyCompleted');
+
+      if (cachedStatus === 'true') {
+        return;
+      }
+
+      // 查詢 Firebase 是否有該用戶的問卷記錄
+      const q = query(
+        collection(db, 'surveyResponses'),
+        where('userId', '==', userId)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // 用戶已填寫過問卷，更新緩存
+        localStorage.setItem('surveyCompleted', 'true');
+      } else {
+        // 用戶未填寫問卷，顯示問卷彈窗
+        setTimeout(() => {
+          setShowSurvey(true);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('[Survey Check] Error checking survey status:', error);
+      // 發生錯誤時，檢查 localStorage
+      const cachedStatus = localStorage.getItem('surveyCompleted');
+      if (cachedStatus !== 'true') {
+        setTimeout(() => {
+          setShowSurvey(true);
+        }, 1000);
+      }
+    }
+  }, []);
+
+  // 檢查用戶登入狀態和問卷狀態
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // 檢查用戶 ID
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      setUserId(storedUserId);
+    }
+
     if (!user) {
       setShowUserRegistration(true);
     } else {
       setShowUserRegistration(false);
+      // 有用戶ID，檢查 Firebase 是否已有問卷記錄
+      if (storedUserId) {
+        checkSurveyStatus(storedUserId);
+      }
     }
-  }, [user]);
+  }, [user, checkSurveyStatus]);
 
   const openModal = (type: 'tip' | 'word' | 'phrase') => {
     setModalType(type);
@@ -513,10 +566,14 @@ export default function EssentialWords() {
     }
   };
 
-  const handleUserRegistrationComplete = () => {
-    // AuthContext 會自動處理，這裡只需要關閉 modal
+  const handleUserRegistrationComplete = useCallback((newUserId: string) => {
+    // 設定用戶 ID
+    setUserId(newUserId);
     setShowUserRegistration(false);
-  };
+
+    // 用戶註冊完成後，檢查 Firebase 問卷狀態
+    checkSurveyStatus(newUserId);
+  }, [checkSurveyStatus]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-3 sm:p-4">
@@ -525,6 +582,21 @@ export default function EssentialWords() {
         isOpen={showUserRegistration}
         onComplete={handleUserRegistrationComplete}
       />
+
+      {/* 事前問卷 */}
+      {showSurvey && userId && (
+        <SurveyModal
+          isOpen={showSurvey}
+          onComplete={() => {
+            setShowSurvey(false);
+            localStorage.setItem('surveyCompleted', 'true');
+          }}
+          onClose={() => {
+            setShowSurvey(false);
+            localStorage.setItem('surveyCompleted', 'true');
+          }}
+        />
+      )}
 
       <div className="max-w-6xl mx-auto">
         <header className="py-6 sm:py-8">

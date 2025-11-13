@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import SurveyModal from '@/lib/components/SurveyModal';
 import UserRegistration from '@/lib/components/UserRegistration';
 import FirebaseStatus from '@/lib/components/FirebaseStatus';
 import HamburgerMenu from '@/lib/components/HamburgerMenu';
@@ -48,8 +47,6 @@ export default function Home() {
   const [savedWords, setSavedWords] = useState<Set<number>>(new Set());
   const contentRef = useRef<HTMLDivElement>(null);
   const sessionRecorded = useRef<boolean>(false);
-  const [showSurvey, setShowSurvey] = useState(false);
-  const [showThankYou, setShowThankYou] = useState(false);
   const [showUserRegistration, setShowUserRegistration] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
@@ -80,18 +77,15 @@ export default function Home() {
       };
     }
 
-    // 檢查流程：用戶註冊 -> 問卷 -> 導覽
+    // 檢查流程：用戶註冊
     if (!storedUserId) {
       // 沒有用戶ID，顯示註冊介面
       setShowUserRegistration(true);
     } else {
-      // 有用戶ID，檢查 Firebase 是否已有問卷記錄
-      checkSurveyStatus(storedUserId);
-      // 載入今天的待辦事項
+      // 有用戶ID，載入今天的待辦事項
       loadTasksForDate(storedUserId, getTodayDate());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 移除 checkFirstVisit 依賴，避免無限循環
+  }, []);
 
   // 載入指定日期的待辦事項
   const loadTasksForDate = async (userId: string, date: string) => {
@@ -124,47 +118,6 @@ export default function Home() {
       console.error('載入失敗:', error);
     }
   };
-
-  // 檢查用戶是否已填寫事前問卷
-  const checkSurveyStatus = useCallback(async (userId: string) => {
-    try {
-      // 先檢查 localStorage 緩存
-      const cachedStatus = localStorage.getItem('surveyCompleted');
-
-      if (cachedStatus === 'true') {
-        return;
-      }
-
-      // 查詢 Firebase 是否有該用戶的問卷記錄
-      const q = query(
-        collection(db, 'surveyResponses'),
-        where('userId', '==', userId)
-      );
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        // 用戶已填寫過問卷，更新緩存並直接啟動導覽
-        localStorage.setItem('surveyCompleted', 'true');
-      } else {
-        // 用戶未填寫問卷，顯示問卷彈窗
-        setTimeout(() => {
-          setShowSurvey(true);
-        }, 1000);
-      }
-    } catch (error) {
-      console.error('[Survey Check] Error checking survey status:', error);
-      // 發生錯誤時，檢查 localStorage
-      const cachedStatus = localStorage.getItem('surveyCompleted');
-      if (cachedStatus !== 'true') {
-        setTimeout(() => {
-          setShowSurvey(true);
-        }, 1000);
-      }
-    }
-  }, []);
-
-
-  // 移除 beforeunload 處理器，改為在保存單字時記錄會話（更可靠）
 
   const parseWords = (content: string) => {
     const words = [];
@@ -661,13 +614,13 @@ export default function Home() {
     setLoading(false);
   };
 
-  const handleUserRegistrationComplete = useCallback((newUserId: string) => {
+  const handleUserRegistrationComplete = (newUserId: string) => {
     setUserId(newUserId);
     setShowUserRegistration(false);
 
-    // 用戶註冊完成後，檢查 Firebase 問卷狀態（不只看 localStorage）
-    checkSurveyStatus(newUserId);
-  }, [checkSurveyStatus]);
+    // 載入今天的待辦事項
+    loadTasksForDate(newUserId, getTodayDate());
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
@@ -679,51 +632,6 @@ export default function Home() {
         isOpen={showUserRegistration}
         onComplete={handleUserRegistrationComplete}
       />
-      
-      <SurveyModal
-        isOpen={showSurvey}
-        onComplete={() => {
-          setShowSurvey(false);
-          setShowThankYou(true);
-          // 3秒後自動關閉感謝信息
-          setTimeout(() => {
-            setShowThankYou(false);
-          }, 3000);
-        }}
-        onClose={() => {
-          setShowSurvey(false);
-        }}
-      />
-
-
-      {/* 感謝信息彈窗 */}
-      {showThankYou && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-8 max-w-md mx-4 text-center">
-            <div className="mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">感謝您的參與！</h3>
-              <p className="text-gray-700 leading-relaxed">
-                您的寶貴意見將幫助我打造更符合留學生需求的日語學習工具。<br />
-                祝您在日本的學習生活順利愉快！
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setShowThankYou(false);
-              }}
-              className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              開始學習
-            </button>
-          </div>
-        </div>
-      )}
-
 
       <div className="max-w-4xl mx-auto">
         <header className="py-8">
